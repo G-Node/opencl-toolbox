@@ -37,20 +37,18 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         mexErrMsgTxt("Insufficient # of arguments");
         return;
     }
-    
+   
     //Get filename
     arr = mxGetField(prhs[0],0,"filename");
         len = mxGetNumberOfElements(arr);   
         kernel_filename.resize(len+1);
         mxGetString(arr, &kernel_filename[0], len+1);        
-        mxFree(arr);
-        
+       
     // Get kernel name
     arr = mxGetField(prhs[0],0,"name");
         len = mxGetNumberOfElements(arr);
         kernel_name.resize(len+1);
         mxGetString(arr, &kernel_name[0], len+1);
-        mxFree(arr);
         
     // Get global size
     arr = mxGetField(prhs[0], 0, "global_size");
@@ -59,7 +57,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         if (len > 3) len = 3;
         for (int i=0; i<len; ++i)            
             global_size[i] = pdata_uint32[i];
-        mxFree(arr);
         
     // Get local size
 	arr = mxGetField(prhs[0], 0, "local_size");
@@ -68,12 +65,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         if (len > 3) len = 3;
         for (int i=0; i<len; ++i)            
             local_size[i] = pdata_uint32[i];
-        mxFree(arr);
         
     // Get selected platform idx:
     arr = mxGetField(prhs[0], 0, "platform");
         platform_idx = static_cast<int>(mxGetScalar(arr));
-        mxFree(arr);
         
     // Get selected device(s) idx:
     arr = mxGetField(prhs[0], 0, "devices");		
@@ -83,8 +78,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         pdata_uint32 = reinterpret_cast<unsigned int *>( mxGetData(arr));
         for (int i=0; i<len; ++i)
             device_idx[i] = pdata_uint32[i];
-        
-        mxFree(arr);
     
     arr = mxGetField(prhs[0], 0, "arg_type");
         len = mxGetNumberOfElements(arr);         
@@ -95,9 +88,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             str.resize(cell_len);
             mxGetString(cell_arr, &str[0], cell_len);
             arg_type.push_back(str);            
-            mxFree(cell_arr);
         }        
-        mxFree(arr);
         
     arr = mxGetField(prhs[0], 0, "arg_mode");
         len = mxGetNumberOfElements(arr);         
@@ -108,9 +99,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             str.resize(cell_len);
             mxGetString(cell_arr, &str[0], cell_len);
             arg_mode.push_back(str);            
-            mxFree(cell_arr);
         }       
-        mxFree(arr);
         
     arr = mxGetField(prhs[0], 0, "arg_size");
 		len = mxGetNumberOfElements(arr);
@@ -118,9 +107,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         for (int i=0; i<len; ++i ) {
             cell_arr = mxGetCell(arr, i);            
             arg_size[i] = static_cast<int>(mxGetScalar(cell_arr));
-            mxFree(cell_arr);
         }        
-        mxFree(arr);
         
     arr = mxGetField(prhs[0], 0, "arg_fieldname");
         len = mxGetNumberOfElements(arr);         
@@ -131,9 +118,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             str.resize(cell_len);
             mxGetString(cell_arr, &str[0], cell_len);
             arg_fieldname.push_back(str);            
-            mxFree(cell_arr);
         }       
-        mxFree(arr);
         
     // 
     // Get argument data
@@ -146,10 +131,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             data.resize(cell_len);
             memcpy(&data[0], mxGetData(cell_arr), cell_len);
             arg_data.push_back(data);            
-            mxFree(cell_arr);
         }       
-        mxFree(arr); 
-     
     #if 0
     // VALIDATION:
         printf("Filename: %s\n", &kernel_filename[0]);
@@ -170,8 +152,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             printf("\t mode = %s\n", &(arg_mode[i][0]));            
             printf("\t data size = %d\n", arg_data[i].size());
         }
-    #endif                                                                                             
-    
+    #endif
+
     dbg_printf("Attempting main algorithm: \n");
     try {	
 		std::vector<cl_platform_id> platforms = OCLPlatform::get_platform_ids();
@@ -215,9 +197,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         dbg_printf("Setup buffers: \n");
         //Now need to setup the buffers:                
         len = arg_mode.size();
-        dbg_printf("Resize buffer: \n");
-        buffers.resize(len);
-        
+        buffers.resize(len); 
+
         for (int i=0; i<len; ++i) {
             dbg_printf("Variable %s\n", &(arg_fieldname[i][0]));            
             int   sz   = arg_size[i];
@@ -255,11 +236,13 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 //Do nothing.
             } else {
                 dbg_printf("\tMaking buffer: \n");
-                OCLBuffer b(context, flags, sz);                
+                OCLBuffer b(context, flags, sz);
+
                 dbg_printf("\tCalling buffer create: \n");
                 b.create();
+
                 dbg_printf("\tCopying buffer to stack: \n");
-                buffers[i] = b;                                
+                buffers[i] = b;
             }
             dbg_printf("\tDone\n");
         }
@@ -365,12 +348,14 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
        for (int i=0; i<fieldname_arr.size(); ++i) {
             dbg_printf("Field %d: %s\n", i, ptr_fieldnames[i]);           
        }
+      
        
        plhs[0] = mxCreateStructArray(2, dims, fieldname_arr.size(), ptr_fieldnames);
        
        mwSize mrows = 1;                              
        len = fieldname_arr.size();
        for (int i=0; i<len; ++i) {
+            dbg_printf("Filling in output %d\n", i);
             mwSize ncols = out_data[i].size();
             int    nBytes = ncols;
             int    nElems = nBytes;
@@ -414,14 +399,27 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                //Unsupported!
             }
             
+            dbg_printf("# elems =  %d\n", nElems);
+            dbg_printf("# bytes =  %d\n", nBytes);
+
             void *lhs_data = mxGetData(arr);
             memcpy(lhs_data, &(out_data[i][0]), nBytes);
             
+            dbg_printf("Setting Field\n");
             //Now set structure
             mxSetField(plhs[0], 0, fieldname_arr[i], arr);
         }
+      
        dbg_printf("Reached end\n");
-       
+      
+       //Clean out buffers:
+       /*
+       for (int j=0; j<buffers.size(); ++j) {
+            delete buffers[j];
+            buffers[j] = 0;
+       }
+       buffers.clear();
+       */
 	} catch (OCLError err) {        
         mexErrMsgTxt("Runtime error:");        
 		std::cout << "Error " << err.m_code << ": " << err.m_message << " (" << err.m_notes << ")" << std::endl;

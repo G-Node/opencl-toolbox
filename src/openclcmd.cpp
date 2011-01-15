@@ -1,4 +1,28 @@
 /*
+ * Copyright (C) 2011 by Radford Ray Juang 
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files 
+ * (the "Software"), to deal in the Software without restriction, including 
+ * without limitation the rights to use, copy, modify, merge, publish, 
+ * distribute, sublicense, and/or sell copies of the Software, and to 
+ * permit persons to whom the Software is furnished to do so, subject to 
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * DEALINGS IN THE SOFTWARE.
+ *
+ */
+
+/*
  * Author: Radford Ray Juang
  * Email: rayver /_at_/ hkn (dot) berkeley (dot) edu
  */
@@ -23,7 +47,7 @@ static OCLContext  *g_context  = 0;            //Pointer to context to use.
 static OCLProgram  *g_program  = 0;            //Pointer to program (kernels) to load and compile to device
 
 
-static std::vector<OCLBuffer> g_buffers;       //Vector of buffers
+static std::vector<OCLBuffer *> g_buffers;       //Vector of buffers
 static std::vector<OCLCommandQueue*> g_queues; //Vector of pointers to command queues
 static std::vector<OCLKernel*> g_kernels;      //Vector of pointers to kernels
 
@@ -43,6 +67,11 @@ static void cleanup(void) {
     for (int i=0; i<g_kernels.size(); ++i) {
         delete g_kernels[i];
         g_kernels[i] = 0;        
+    }
+
+    for (int i=0; i<g_kernels.size(); ++i) {
+        delete g_buffers[i];
+        g_buffers[i] = 0;        
     }
 
     g_kernels.clear();
@@ -100,7 +129,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
     if (strcmp(&buffer[0], "initialize") == 0) {
         //openclcmd('initialize', platform, devices) 
         //  platform: single integer representing the index of platform to use
+        //  (zero-centered)
         //  devices: array of integers representing index of devices to use
+        //  (zero-centered)
         //
         //Returns true if success, false otherwise.
         if (nrhs < 3)  
@@ -361,7 +392,7 @@ void fetch_opencl_devices(int nlhs, mxArray *plhs[], int nrhs, const mxArray *pr
 }
 
 void initialize(mxArray *plhs[], const mxArray *platform, const mxArray *devices) {
-    int platform_idx = static_cast<int>(mxGetScalar(platform) - 1);
+    int platform_idx = static_cast<int>(mxGetScalar(platform) );
     int len = 0;
     unsigned int *p_data_uint32 = 0;
 
@@ -372,8 +403,9 @@ void initialize(mxArray *plhs[], const mxArray *platform, const mxArray *devices
         
         //Establish platform and context
         if (g_platform != 0) cleanup();
-        
-        dbg_printf("Connecting platform: ");
+       
+        dbg_printf("# Platforms: %d\n", platforms.size());
+        dbg_printf("Connecting to platform %d: ", platform_idx);
         g_platform = new OCLPlatform(platforms[platform_idx]); 
         dbg_printf("OK\n");
 
@@ -491,13 +523,13 @@ void create_buffer(mxArray *plhs[], const mxArray *mode, const mxArray *sz) {
     } 
 
     len = -1;
-    try {
+    try {        
         len = g_buffers.size();
-        g_buffers.resize(len+1);
-    
-        OCLBuffer b(*g_context, flags, nSz);
-        b.create();
-        g_buffers[len] = b;
+        dbg_printf("Size of buffer = %d\n", len);
+
+        OCLBuffer *b = new OCLBuffer(*g_context, flags, nSz);
+        b->create();
+        g_buffers.push_back(b);
     } catch (OCLError err) {
         dbg_printf("FAIL\n");
         mexErrMsgTxt("Runtime error:");
@@ -531,7 +563,8 @@ void set_buffer(mxArray *plhs[], const mxArray *deviceNumber, const mxArray *buf
 
     int return_val = 0;
     try {
-        g_queues[dev_idx]->enqueue_buffer_copy(g_buffers[buf_idx], pData, sz);
+        g_queues[dev_idx]->enqueue_buffer_copy(*g_buffers[buf_idx], pData, sz);
+        g_queues[dev_idx]->finish();
         return_val = 1;
     } catch(OCLError err) {
         dbg_printf("FAIL\n");
@@ -573,6 +606,7 @@ void get_buffer(mxArray *plhs[], const mxArray *deviceNumber, const mxArray *buf
     size_t sz = (size_t) mxGetScalar(num_elements);
 
     int len = mxGetNumberOfElements(type);
+
     std::vector<char> type_str;
     type_str.resize(len+1);
     mxGetString(type, &type_str[0], len+1);
@@ -580,7 +614,7 @@ void get_buffer(mxArray *plhs[], const mxArray *deviceNumber, const mxArray *buf
     mxArray *arr = 0;
 
     size_t mrows = 1;
-    size_t nElems = 1;
+    size_t nElems = sz;
 
     if (strcmp(&type_str[0], "int8") == 0) {                
          arr = mxCreateNumericMatrix(mrows,nElems, mxINT8_CLASS, mxREAL);
@@ -628,7 +662,8 @@ void get_buffer(mxArray *plhs[], const mxArray *deviceNumber, const mxArray *buf
 
     try {
         void *dst = mxGetData(arr); 
-        g_queues[dev_idx]->enqueue_buffer_copy(dst, g_buffers[buf_idx], sz, 0, CL_FALSE);
+        g_queues[dev_idx]->enqueue_buffer_copy(dst, *g_buffers[buf_idx], sz, 0, CL_FALSE);
+        g_queues[dev_idx]->finish(); //When a copy occurs, need to wait before returning.. otherwise, crash will happen
         plhs[0] = arr;
     } catch(OCLError err) {
         dbg_printf("FAIL\n");
@@ -753,7 +788,7 @@ void set_kernel_args(mxArray *plhs[], const mxArray *kernel_id,
     int return_val = 0;
     try {
         if (buf_idx >= 0) {
-            (*(g_kernels[kernel_idx]))[arg_idx] = g_buffers[buf_idx];
+            (*(g_kernels[kernel_idx]))[arg_idx] = *g_buffers[buf_idx];
         } else {
             (*(g_kernels[kernel_idx]))(arg_idx, sz ) = pdata;
         }
@@ -769,225 +804,4 @@ void set_kernel_args(mxArray *plhs[], const mxArray *kernel_id,
     }
     plhs[0] = mxCreateLogicalScalar(return_val);
 }
-/*
-    try {	
-		std::vector<cl_platform_id> platforms = OCLPlatform::get_platform_ids();
-        
-        OCLPlatform p(platforms[platform_idx]); 
-        OCLContext context(p);
-        
-        std::vector<cl_device_id> devices = p.get_device_ids();        
-		for (size_t j=0; j<device_idx.size(); ++j) {            
-            context += devices[device_idx[j]];            
-		}
-        
-		context.create();
-        
-		OCLProgram prog(context);
 
-        OCLCommandQueue queue(context, devices[device_idx[0]]); 
-
-		prog.add_source(&kernel_filename[0]);
-		prog.create();
-		prog.build();        
-        
-        std::vector<OCLBuffer> buffers;
-        
-        len = arg_mode.size();
-        buffers.resize(len);
-        
-        for (int i=0; i<len; ++i) {
-            int   sz   = arg_size[i];
-            char *mode      = &(arg_mode[i][0]);
-            char *type      = &(arg_type[i][0]);            
-            int flags;
-            
-            if (mode[0] == 'r') {
-                if (mode[1] == 'o') {
-                    flags = MEM_FLAGS_READ_ONLY;
-                } else if (mode[1] == 'w') {
-                    flags = MEM_FLAGS_READ_WRITE;
-                }               
-            } else if (mode[0] == 'w') {
-                if (mode[1] == 'o') {
-                    flags = MEM_FLAGS_WRITE_ONLY;
-                }                
-            } else if (mode[0] == 'l') {
-                flags = 0;    
-                sz = 0;
-            } else if (mode[0] == 't') {
-                flags = 0;
-                sz = 0;                
-            }
-            if (mode[0] == 'l'  || mode[0] == 't') {
-                //Do nothing.
-            } else {
-                OCLBuffer b(context, flags, sz);                
-                b.create();
-                buffers[i] = b;                                
-            }
-        }
-        
-        int ndims = 0;
-        for (ndims =0; (ndims < 3) && (global_size[ndims] > 0) ; ++ndims) {}
-        
-        //For now only accept first device:        
-        OCLEvent evt;
-        
-        //1. Queue copy to buffer commands 
-        len = arg_mode.size();
-        for (int i=0; i<len; ++i) {
-            int   sz   = arg_size[i];
-            char *mode      = &(arg_mode[i][0]);
-            char *type      = &(arg_type[i][0]);                                    
-            void *data      = reinterpret_cast<void *>(&(arg_data[i][0]));
-            
-            if (mode[0] == 'r') {
-                queue.enqueue_buffer_copy(buffers[i], data, sz);
-            }
-        }
-
-        OCLKernel kernel(prog, &kernel_name[0]);
-			kernel.set_global_offset(0,0,0);
-			kernel.set_ndims(ndims);
-			kernel.set_local_size(local_size[0],local_size[1],local_size[2]);
-            kernel.set_global_size(global_size[0],global_size[1],global_size[2]);                    
-          
-        len = arg_mode.size();
-        for (int i=0; i<len; ++i) {
-            int   sz   = arg_size[i];
-            char *mode = &(arg_mode[i][0]);
-            void *data = &(arg_data[i][0]);
-            
-            if (mode[0] == 'l') {
-                kernel(i, sz) = 0;
-            } else if (mode[0] == 't') {
-                kernel(i, sz) = data;
-            } else {
-                kernel[i] = buffers[i];
-            }
-        }
-        
-        //2. Queue the kernel
-        dbg_printf("Queue kernel: \n");
-        queue.enqueue_ndrange_kernel(kernel);
-        
-        //3. Queue copying to output buffers
-        dbg_printf("Queue copy-from-buffers : \n");
-        std::vector<std::vector<char> > out_data;        
-        std::vector<char *> fieldname_arr;
-        std::vector<char *> typename_arr;        
-        
-        len = arg_mode.size();        
-        for (int i=0; i<len; ++i) {
-            int   sz        = arg_size[i];
-            char *type      = &(arg_type[i][0]);  
-            char *fieldname = &(arg_fieldname[i][0]);
-            char *mode      = &(arg_mode[i][0]);
-            
-            if (fieldname[0] == 0) {
-                continue;
-            }
-            
-            if (mode[0] == 'l' || mode[0] == 't') {                
-                std::vector<char> data;
-                data.resize(sz);
-                memcpy(&data[0], &(arg_data[i][0]),sz);
-                out_data.push_back(data);
-                fieldname_arr.push_back(fieldname);            
-                typename_arr.push_back(type);
-                continue;
-            }
-                
-            fieldname_arr.push_back(fieldname);            
-            typename_arr.push_back(type);
-            
-            std::vector<char> data;                      
-            data.resize(sz);
-            out_data.push_back(data);
-            
-            void *dst      =  reinterpret_cast<void *>(&(out_data[out_data.size()-1][0])); //reinterpret_cast<void*>(&data[0]); 
-            queue.enqueue_buffer_copy(dst, buffers[i], sz, 0, CL_FALSE);
-        }                                                
-        dbg_printf("Waiting for GPGPU to finish...\n");
-        queue.finish();                        
-        
-        //Now copy output:
-        
-       //4. Now need to interface back to MATLAB
-       mwSize dims[2] = {1,1};
-       dbg_printf("Copying variables back to matlab...\n");
-       const char **ptr_fieldnames = (const char **) (&(fieldname_arr[0]));
-       
-       dbg_printf("Number of fields = %d\n", fieldname_arr.size());
-       for (int i=0; i<fieldname_arr.size(); ++i) {
-            dbg_printf("Field %d: %s\n", i, ptr_fieldnames[i]);           
-       }
-       
-       plhs[0] = mxCreateStructArray(2, dims, fieldname_arr.size(), ptr_fieldnames);
-       
-       mwSize mrows = 1;                              
-       len = fieldname_arr.size();
-       for (int i=0; i<len; ++i) {
-            mwSize ncols = out_data[i].size();
-            int    nBytes = ncols;
-            int    nElems = nBytes;
-            char   *type  = typename_arr[i];
-            
-            if (strcmp(type, "int8") == 0) {                
-                arr = mxCreateNumericMatrix(mrows,nElems, mxINT8_CLASS, mxREAL);
-            } else if (strcmp(type, "int16") == 0) {
-                nElems /= 2;
-                arr = mxCreateNumericMatrix(mrows,nElems, mxINT16_CLASS, mxREAL);                                
-            } else if (strcmp(type, "int32") == 0) {
-                nElems /= 4;
-                arr = mxCreateNumericMatrix(mrows,nElems, mxINT32_CLASS, mxREAL);
-            } else if (strcmp(type, "int64") == 0) {
-                nElems /= 8;
-                arr = mxCreateNumericMatrix(mrows,nElems, mxINT64_CLASS, mxREAL);
-            } else if (strcmp(type, "uint8") == 0) {
-                arr = mxCreateNumericMatrix(mrows,nElems, mxUINT8_CLASS, mxREAL);
-            } else if (strcmp(type, "uint16") == 0) {
-                nElems /= 2;
-                arr = mxCreateNumericMatrix(mrows,nElems, mxUINT16_CLASS, mxREAL);
-            } else if (strcmp(type, "uint32") == 0) {
-                nElems /= 4;
-                arr = mxCreateNumericMatrix(mrows,nElems, mxUINT32_CLASS, mxREAL);                
-            } else if (strcmp(type, "uint64") == 0) {
-                nElems /= 8;
-                arr = mxCreateNumericMatrix(mrows,nElems, mxUINT64_CLASS, mxREAL);
-            } else if (strcmp(type, "single") == 0) {
-                nElems /= 4;
-                arr = mxCreateNumericMatrix(mrows,nElems, mxSINGLE_CLASS, mxREAL);
-            } else if (strcmp(type, "double") == 0) {
-                nElems /= 8;
-                arr = mxCreateNumericMatrix(mrows,nElems, mxDOUBLE_CLASS, mxREAL);                
-            } else if (strcmp(type, "char") == 0) {
-                mwSize dims[2] = {1, ncols};                
-                arr = mxCreateCharArray(2, dims);
-            } else if (strcmp(type, "logical") == 0) {
-                mwSize dims[2] = {1, ncols};                
-                arr = mxCreateLogicalArray(2, dims);                
-            } else {
-               //Unsupported!
-            }
-            
-            void *lhs_data = mxGetData(arr);
-            memcpy(lhs_data, &(out_data[i][0]), nBytes);
-            
-            //Now set structure
-            mxSetField(plhs[0], 0, fieldname_arr[i], arr);
-        }
-       dbg_printf("Reached end\n");
-       
-	} catch (OCLError err) {        
-        mexErrMsgTxt("Runtime error:");        
-		std::cout << "Error " << err.m_code << ": " << err.m_message << " (" << err.m_notes << ")" << std::endl;
-	} catch (...) {
-        mexErrMsgTxt("Runtime error:");
-		std::cout << "Unknown error occurred!" << std::endl;
-	}  
-    
-    return;
-}
-*/
