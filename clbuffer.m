@@ -28,11 +28,19 @@ classdef clbuffer < handle
                     unit_size = 2;
                 case {'int8', 'uint8', 'char', 'logical'},
                     unit_size = 1;
+                case {'local'},
+                    unit_size = 0;
                 otherwise,
                     unit_size = 1;
             end
-            
-            self.id = openclcmd('create_buffer', mode, uint32(unit_size*nelems));
+
+            self.id = -1;
+            if unit_size > 0, 
+                self.id = openclcmd('create_buffer', mode, uint32(unit_size*nelems));
+            else
+                unit_size = 1; % Set to 1 so that we can properly compute the bytes
+            end
+
             self.type = type;
             self.num_elems = nelems;
             self.num_bytes = uint32(unit_size*nelems);
@@ -41,12 +49,20 @@ classdef clbuffer < handle
         end
         
         function data = get(self)
-            data = openclcmd('get_buffer', device-1, self.id, self.num_elems, self.type);            
+            data = [];
+
+            if self.id >= 0, 
+                data = openclcmd('get_buffer', self.device-1, self.id, self.num_elems, self.type);            
+            end
         end
         
         function set(self, data)
+            if self.id < 0,
+                return;
+            end
+
             data = feval(self.type, data);
-            openclcmd('set_buffer', device-1, self.id, data);
+            openclcmd('set_buffer', self.device-1, self.id, data);
         end
     end
 end

@@ -23,6 +23,8 @@ classdef opencl < handle
         
         selected_platform = 1;  
         selected_device   = 1;
+        files_loaded = {};
+        built = 0;        
     end
     
     methods
@@ -65,18 +67,54 @@ classdef opencl < handle
             if isempty(devices),
                 devices = 1;
             end
+           
+            result = openclcmd('initialize', uint32(platform-1), uint32(devices-1));
             
-            platform = uint32(platform - 1);
-            devices = uint32(devices - 1);
-            
-            result = openclcmd('initialize', platform, devices);
             if ~result,
                 error('OpenCL platform and device could not be initialized.');
             end
+            
             this.selected_platform = platform;
             this.selected_device = devices;
         end
         
+        function addfile(this, filename)
+            %  addfile(obj, filename)
+            % 
+            %  Includes the given cl file to be built and sent to the GPGPU
+            %
+            
+            this.files_loaded{end+1} = filename;
+            openclcmd('addfile', filename);
+        end
+        
+        function build(this)
+            % build(obj)
+            % 
+            % Build the opencl files and send to GPGPU.
+            %
+            openclcmd('build');
+            this.built = 1; 
+        end
+        
+        function wait(this, device_id)
+            % wait(obj)
+            % wait(obj, device)
+            % 
+            % Waits for the index of the device (first index is 1) 
+            % to complete all execution and memory operations.
+            %
+            
+            if nargin < 2,
+                device_id = [];
+            end
+            
+            if isempty(device_id),
+                device_id = 1;
+            end
+            
+            openclcmd('wait_queue', device_id-1);
+        end
     end           
 end
     
