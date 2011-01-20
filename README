@@ -1,0 +1,171 @@
+==========[ OpenCL Toolbox ]============================
+Version 0.1
+Date: 01.19.2011
+Website: http://code.google.com/p/opencl-toolbox
+SVN: http://opencl-toolbox.googlecode.com/svn/trunk/
+
+==========[ Requirements ] =============================
+
+- OpenCL 1.1+ device driver platform
+ (e.g. you can download and install one from:
+     http://developer.amd.com/zones/OpenCLZone            
+     http://software.intel.com/en-us/articles/intel-opencl-sdk   
+     http://www.nvidia.com/opencl
+  )
+- MATLAB R2009 or later (I've only tested this on R2010)
+- CMake (http://www.cmake.org )
+- C++ compiler (such as g++ or Visual Studio )
+
+==========[ Installation ] =============================
+
+  FOR WINDOWS:
+
+* Requires that you have CMake GUI (http://www.cmake.org) installed
+* I am assuming you are using Microsoft Visual Studio. Other compilers will have to make some slight 
+  changes to be noted
+
+1. Run cmake-gui.
+   Set the source code directory to this folder (the folder containing this README file you are reading)
+   Set the build folder to some temporary location (e.g. C:\Temp\Build) 
+
+2. Click Configure.
+
+3. Select the proper compiler (e.g. Visual Studio 2008). This step may differ for non VS users.
+   Select Use default native compiler.
+   Click Finish
+
+4. If there are any errors, you will need to configure Cmake. If no errors, then you can skip this step.
+   To configure Cmake, make sure you are in Grouped View: 
+        select the "Simple View" drop box (or "Advanced View" drop box) and change to "Grouped View".
+	(if you see checkboxes, make sure Advanced and Grouped are checked)   
+   Expand MATLAB and set as follows:
+      (for the example, I assume MATLAB is installed in C:\Program Files\MATLAB\R2009b)
+
+    * MATLAB_ENG_LIBRARY:  set to the fullpath of the libeng.lib file.
+ 	  e.g. C:\Program Files\MATLAB\R2009b\extern\lib\win32\microsoft\libeng.lib
+	  (for x64, it is win64. for non VS users, you would select the non-microsoft folder )
+
+    * MATLAB_INCLUDE_DIR: fullpath of the matlab include folder (this folder contains mex.h)
+	  e.g. C:\Program Files\MATLAB\R2009b\extern\include
+
+    * MATLAB_MEX_LIBRARY: full path of the libmex.lib
+          e.g. in Windows : C:\Program Files\MATLAB\R2009b\extern\lib\win32\microsoft\libmex.lib
+	  (for x64, it is win64. for non VS users, you would select the non-microsoft folder )
+
+    * MATLAB_MX_LIBRARY: full path of the libmx.lib
+	  e.g. in Windows : C:\Program Files\MATLAB\R2009b\extern\lib\win32\microsoft\libmx.lib
+	  (for x64, it is win64. for non VS users, you would select the non-microsoft folder )
+
+   Expand MEX and set as follows:
+    * MEX_COMPILER: full path of the mex compiler (e.g. /sw/matlab/bin/mex )
+	  e.g. C:\Program Files\MATLAB\R2009b\bin\mex.bat
+
+    * MEX_MEXEXT: full path of the mexext script (e.g. /sw/matlab/bin/mexext )
+	  e.g. C:\Program Files\MATLAB\R2009b\bin\mexext.bat
+
+   Expand OPENCL and set as follows:
+    * OPENCL_INCLUDE_DIRS : path to the opencl include directory (this directory contains CL/cl.h) 
+	  e.g. C:\Program Files\ATI Stream\include
+    * OPENCL_LIBRARIES : fullpath of the OpenCL.lib file 
+	  e.g. C:\Program Files\ATI Stream\lib\x86\OpenCL.lib 
+
+
+5. One configured, click Configure. If all the settings are  correct, you should see, "Configuring done".
+   Otherwise, you have an error and will have to go back and fix step 4.
+
+6. Click Generate. You should see "Generating done".
+
+7. Now build the generated project files. Go to your build directory (specified in step 1, e.g. C:\Temp\Build)
+   and open up the solution file in Visual Studio (this step varies for non-VS users). Select Build->Build Solution
+
+8. Go to the source directory. If there isn't an openclcmd.mexw32 or openclcmd.mexw64 file in the folder, it is probably in the Debug folder. Copy Debug/openclcmd.mexw* to the current folder (containing this README file)
+
+9. In MATLAB, add this folder to your toolbox path. Now we're ready to go!
+
+
+====================================================
+
+FOR LINUX USERS:
+ 
+* Requires that you have CMake GUI (http://www.cmake.org) installed
+* I am assuming you are using g++. 
+
+1. Run cmake-gui.
+   Set the source code directory to this folder (the folder containing this README file you are reading)
+   Set the build folder to some temporary location (e.g. /tmp/build) 
+
+2. Click Configure.
+
+3. Select the proper compiler (e.g. Unix Makefiles).
+   Select Use default native compiler.
+   Click Finish
+
+4. If there are any errors, you will need to configure Cmake. If no errors, then you can skip this step.
+   To configure Cmake, make sure you are in Grouped View: 
+	(if you see checkboxes, make sure Advanced and Grouped are checked)   
+ 
+   Expand MATLAB and set as follows:
+      (for the example, I assume MATLAB is installed in /sw/matlab/r2010b)
+
+    * MATLAB_ENG_LIBRARY:  set to the fullpath of the libeng.so file.
+ 	  e.g. /sw/matlab/r2010b/bin/glnxa64/libeng.so
+	  (for x86, it is glnxa32 (?someone check this))
+
+    * MATLAB_INCLUDE_DIR: fullpath of the matlab include folder (this folder contains mex.h)
+	  e.g. /sw/matlab/r2010b/extern/include
+
+    * MATLAB_MEX_LIBRARY: full path of the libmex.so
+ 	  e.g. /sw/matlab/r2010b/bin/glnxa64/libmex.so
+	  (for x86, it is glnxa32 (?someone check this))
+
+    * MATLAB_MX_LIBRARY: full path of the libmx.so
+ 	  e.g. /sw/matlab/r2010b/bin/glnxa64/libmx.so
+	  (for x86, it is glnxa32 (?someone check this))
+
+   Expand MEX and set as follows:
+    * MEX_COMPILER: full path of the mex compiler 
+	  e.g. /sw/matlab/r2010b/bin/mex 
+
+    * MEX_MEXEXT: full path of the mexext script 
+	  e.g. /sw/matlab/r2010b/bin/mexext )
+
+   Expand OPENCL and set as follows:
+    * OPENCL_INCLUDE_DIRS : path to the opencl include directory (this directory contains CL/cl.h) 
+	  e.g. /sw/cuda/include
+    * OPENCL_LIBRARIES : fullpath of the libOpenCL.so file 
+	  e.g. /usr/lib/libOpenCL.so
+ 
+
+5. One configured, click Configure. If all the settings are  correct, you should see, "Configuring done".
+   Otherwise, you have an error and will have to go back and fix step 4.
+
+6. Click Generate. You should see "Generating done".
+
+7. Now build the generated project files. Go to your build directory (specified in step 1, e.g. /tmp/build)
+
+	cd /tmp/build 
+
+   and run make:
+
+        make
+
+8. Go to the source directory (this folder containing the README file you are reading). 
+  You should see an openclcmd.mex* file. 
+
+9. In MATLAB, add this folder (containing the README file you are reading) to your toolbox path. i
+Now we're ready to go!
+
+========== [ USAGE ] ================================
+
+see test_openclmatlab.m  for examples
+or if you want to use the raw interface, see test_openclcmd.m
+
+
+==========[ To Do list ] =============================
+
+- Better documentation and matlab examples
+- Override matlab plus, minus, rdivide, ldivide, times, pow, exp, etc.
+- BLAS functionality
+- Automatically determining global and local dimensions
+- Testing on various platforms
+
