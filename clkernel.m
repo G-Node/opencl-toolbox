@@ -5,15 +5,18 @@ classdef clkernel < handle
     end
     
     methods 
-        function self = clkernel(kernelname, target_device, global_dim, local_dim)
-            if nargin < 3,
+        function self = clkernel(kernelname, global_dim, local_dim, target_device)
+
+            if nargin < 4,
                 target_device = [];
             end
+
             if isempty(target_device),
                 target_device = 1;
             end
             
-            self.device = target_device;            
+            self.device = target_device;   
+            keyboard;
             self.id = openclcmd('create_kernel', uint32(global_dim), uint32(local_dim), kernelname);
             
             % TODO: Method to automatically determine optimal global and local dimensions 
@@ -88,7 +91,7 @@ classdef clkernel < handle
                 end                
             end
             
-            openclcmd('execute_kernel', self.device, self.id);
+            openclcmd('execute_kernel', self.device-1, self.id);
         end        
     end
 end

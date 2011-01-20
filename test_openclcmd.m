@@ -23,7 +23,7 @@ openclcmd('set_buffer', 0, buffB, single([1,2,3,4,5,6,7,8,9]))
 
 rA = openclcmd('get_buffer', 0, buffA, 9, 'single')
 
-kid = openclcmd('create_kernel', uint32([9,0,0]), uint32([9,0,0]), 'VectorAdd');
+kid = openclcmd('create_kernel', uint32([9,0,0]), uint32([9,0,0]), 'add');
 openclcmd('set_kernel_args', kid, 0, buffA, [], 0);
 openclcmd('set_kernel_args', kid, 1, buffB, [], 0);
 openclcmd('set_kernel_args', kid, 2, buffC, [], 0);
