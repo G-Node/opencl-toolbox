@@ -64,5 +64,6 @@ classdef clbuffer < handle
             data = feval(self.type, data);
             openclcmd('set_buffer', self.device-1, self.id, data);
         end
+
     end
 end
