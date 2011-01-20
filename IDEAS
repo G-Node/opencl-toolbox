@@ -1,0 +1,14 @@
+
+A = [1:3; 4:6; 7:9];
+B = [1:3; 4:6; 7:9];
+
+devA = clobject(A);
+devB = clobject(B);
+devC = devA + devB;  % Will require a buffer C to be created
+
+C = devC.fetch();    % Fetch device data from memory
+
+kernel = opencl.kernel('filename', 'kernelname');
+output = kernel(devA, devB, 7);
+
+
