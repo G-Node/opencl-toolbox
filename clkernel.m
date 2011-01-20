@@ -15,8 +15,7 @@ classdef clkernel < handle
                 target_device = 1;
             end
             
-            self.device = target_device;   
-            keyboard;
+            self.device = target_device;               
             self.id = openclcmd('create_kernel', uint32(global_dim), uint32(local_dim), kernelname);
             
             % TODO: Method to automatically determine optimal global and local dimensions 
@@ -44,7 +43,8 @@ classdef clkernel < handle
                     value = self.(index.subs);
                 end
             else
-                value = self.execute(index.subs{:});
+                self.execute(index.subs{:});
+                value = [];
                 S = S(2:end);
             end
             
@@ -60,17 +60,20 @@ classdef clkernel < handle
 
                 % Is the argument a clbuffer?
                 S = whos('argval');
+                
+                kernelid = self.id;
+                bufferid = -1;
+                data = [];
+                nbytes = 0;
+                
                 if strcmp(S.class, 'clbuffer'),
-                    % If yes, then set kernel arg to the clbuffer id        
-                    %openclcmd('set_kernel_args',  kernel_id, arg_num, buffer_id, [], 0 )
-                    buffer_id = argval.id;
-                    if buffer_id >= 0,
-                        openclcmd('set_kernel_args',  self.id, argnum, buffer_id, [], 0 );
-                    else
-                        %Setting kernel argument to local variable type:
-                        %  set_kernel_args( kernel_id, arg_num, -1, [], nBytes )          
-                        nBytes = argval.num_bytes;
-                        openclcmd('set_kernel_args', self.id, argnum, -1, [], nBytes);
+                    % It can be a buffer with actual data or buffer that is
+                    % empty.
+                    %                    
+                    bufferid = argval.id;
+                    if bufferid < 0,
+                        %Local variable type:                        
+                        nbytes = argval.num_bytes;
                     end
                     
                 elseif strcmp(S.class, 'double') || ...
@@ -84,12 +87,15 @@ classdef clkernel < handle
                        strcmp(S.class, 'int16') || ...
                        strcmp(S.class, 'int32') || ...
                        strcmp(S.class, 'logical')
-                                       
-                    openclcmd('set_kernel_args', self.id, argnum, -1, argval, 0);
+                    data = argval;
                 else
                     error('Invalid type');
-                end                
-            end
+                end 
+                
+                openclcmd('set_kernel_args', kernelid, argnum, bufferid, data, int32(nbytes));
+                %fprintf(1, 'set_kernel_args: kernelid = %d, argnum = %d, buffer=%d, data=%g, sz=%d\n', ...
+                %    kernelid, argnum, bufferid, data, nbytes);
+            end % for i
             
             openclcmd('execute_kernel', self.device-1, self.id);
         end        
