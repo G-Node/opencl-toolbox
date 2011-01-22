@@ -1,5 +1,3 @@
-% Copyright (C) 2011 by Radford Ray Juang
-% 
 % clkernel is a class that represents an OpenCL kernel object.
 % It is used to create a function out of the CL kernels that were compiled
 % and sent to the GPGPU device using the opencl.addfile and opencl.build
@@ -30,9 +28,14 @@
 %   values = z.get();
 %
 % See clkernel/clkernel 
+%     clkernel/subsref
+%     clkernel/execute
+%
+% Author:Radford Ray Juang
 %
 
-% 
+% Copyright (C) 2011 by Radford Ray Juang
+%
 % Permission is hereby granted, free of charge, to any person obtaining a copy
 % of this software and associated documentation files (the "Software"), to deal
 % in the Software without restriction, including without limitation the rights
