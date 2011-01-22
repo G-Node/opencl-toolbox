@@ -317,7 +317,17 @@ void fetch_opencl_devices(int nlhs, mxArray *plhs[], int nrhs, const mxArray *pr
         "vendor",    
         "version",
         "driver",
-        "extensions"
+        "extensions",
+        "max_compute_units",
+        "max_work_item_dimensions",
+        "max_work_group_size",
+        "max_work_item_sizes",
+        "max_clock_frequency",
+        "global_mem_size",
+        "global_mem_cache_size",
+        "max_constant_buffer_size",
+        "max_constant_args",
+        "local_mem_size"
     };
     
     enum { 
@@ -336,13 +346,23 @@ void fetch_opencl_devices(int nlhs, mxArray *plhs[], int nrhs, const mxArray *pr
         DEV_FIELD_VENDOR,
         DEV_FIELD_VERSION,
         DEV_FIELD_DRIVER,
-        DEV_FIELD_EXTENSIONS,        
+        DEV_FIELD_EXTENSIONS,
+        DEV_FIELD_MAX_COMPUTE_UNITS,
+        DEV_FIELD_MAX_WORK_ITEM_DIMENSIONS,
+        DEV_FIELD_MAX_WORK_GROUP_SIZE,
+        DEV_FIELD_MAX_WORK_ITEM_SIZES,
+        DEV_FIELD_MAX_CLOCK_FREQUENCY,
+        DEV_FIELD_GLOBAL_MEM_SIZE,
+        DEV_FIELD_GLOBAL_MEM_CACHE_SIZE,
+        DEV_FIELD_MAX_CONSTANT_BUFFER_SIZE,
+        DEV_FIELD_MAX_CONSTANT_ARGS,
+        DEV_FIELD_LOCAL_MEM_SIZE,
         DEV_NUM_FIELDS
     };
     
     dims[0] = 1; dims[1] = 1;
     mxArray *arr;
-    
+
     try {	
 		std::vector<cl_platform_id> platforms = OCLPlatform::get_platform_ids();
         mwSize dims[2] = {platforms.size(), 1};
@@ -393,8 +413,46 @@ void fetch_opencl_devices(int nlhs, mxArray *plhs[], int nrhs, const mxArray *pr
                 arr = mxCreateString(d.m_properties.driver_version.c_str()); 
                     mxSetField(dev_arr, j, device_field_names[DEV_FIELD_DRIVER],  arr);                  
                                    
-                arr = mxCreateString(p.m_extensions.c_str());                 
-                    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_EXTENSIONS],  arr);                   
+                arr = mxCreateString(d.m_properties.extensions.c_str());                 
+                    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_EXTENSIONS],  arr);
+
+                arr = mxCreateDoubleScalar(d.m_properties.max_compute_units);
+                    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_MAX_COMPUTE_UNITS], arr);
+              
+                arr = mxCreateDoubleScalar(d.m_properties.max_work_item_dimensions);
+                    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_MAX_WORK_ITEM_DIMENSIONS], arr);
+
+                arr = mxCreateDoubleScalar(d.m_properties.max_work_group_size);
+                    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_MAX_WORK_GROUP_SIZE], arr);
+
+                arr = mxCreateDoubleMatrix(1, d.m_properties.max_work_item_dimensions, mxREAL);
+                    double *pdata = (double *) mxGetData(arr);
+
+                    //Not sure why changing this to a for loop causes mex to crash ??
+                    pdata[0] = d.m_properties.max_work_item_sizes[0];
+                    pdata[1] = d.m_properties.max_work_item_sizes[1];
+                    pdata[2] = d.m_properties.max_work_item_sizes[2];
+
+                    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_MAX_WORK_ITEM_SIZES], arr);
+
+                arr = mxCreateDoubleScalar(d.m_properties.max_clock_frequency);
+                    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_MAX_CLOCK_FREQUENCY], arr);
+
+                arr = mxCreateDoubleScalar(d.m_properties.global_mem_size);
+                    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_GLOBAL_MEM_SIZE], arr);
+
+                arr = mxCreateDoubleScalar(d.m_properties.global_mem_cache_size);
+                    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_GLOBAL_MEM_CACHE_SIZE], arr);
+
+                arr = mxCreateDoubleScalar(d.m_properties.max_constant_buffer_size);
+                    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_MAX_CONSTANT_BUFFER_SIZE], arr);
+
+                arr = mxCreateDoubleScalar(d.m_properties.max_constant_args);
+                    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_MAX_CONSTANT_ARGS], arr);
+
+                arr = mxCreateDoubleScalar(d.m_properties.local_mem_size);
+                    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_LOCAL_MEM_SIZE], arr);
+
 			}
             mxSetField(plhs[0], i, platform_field_names[PLAT_FIELD_DEVICES],  dev_arr);                                  
 		}
