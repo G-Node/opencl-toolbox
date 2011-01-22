@@ -36,8 +36,8 @@
 
 using namespace ray::opencl;
 
-//#define dbg_printf  printf    //Enable debug print statements
-#define dbg_printf              //Remove debug print statements
+#define dbg_printf  printf    //Enable debug print statements
+//#define dbg_printf              //Remove debug print statements
 
 /****************************************************
  * GLOBAL VARIABLES DESIGNATING STATE OF MEX FILE   *
@@ -48,9 +48,9 @@ static OCLContext  *g_context  = 0;            //Pointer to context to use.
 static OCLProgram  *g_program  = 0;            //Pointer to program (kernels) to load and compile to device
 
 
-static std::vector<OCLBuffer *> g_buffers;       //Vector of buffers
-static std::vector<OCLCommandQueue*> g_queues; //Vector of pointers to command queues
-static std::vector<OCLKernel*> g_kernels;      //Vector of pointers to kernels
+static std::vector<OCLBuffer *> g_buffers;           //Vector of buffers
+static std::vector<OCLCommandQueue*> g_queues;       //Vector of pointers to command queues
+static std::vector<OCLKernel*> g_kernels;            //Vector of pointers to kernels
 static std::vector<unsigned int> g_free_buffer_pool; //Array of free indices in g_buffers
 
 
@@ -72,7 +72,15 @@ static void cleanup(void) {
         g_kernels[i] = 0;        
     }
 
-    for (int i=0; i<g_kernels.size(); ++i) {
+    for (int i=0; i<g_buffers.size(); ++i) {
+    	/*if (g_buffers[i]) {
+	        if (g_buffers[i]->m_host_ptr) {
+
+	            free(g_buffers[i]->m_host_ptr);
+	            g_buffers[i]->m_host_ptr = 0;
+	        }
+	    }*/
+
         delete g_buffers[i];
         g_buffers[i] = 0;        
     }
@@ -257,7 +265,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
         set_kernel_args(plhs, prhs[1], prhs[2], prhs[3], prhs[4], prhs[5]);
 
     } else if (strcmp(&buffer[0], "execute_kernel") == 0 ) {
-        //openclcmd('create_kernel', device_id, kernel_id)
+        //openclcmd('execute_kernel', device_id, kernel_id)
         //
         //Execute a kernel given the device and the kernel 
         //
@@ -430,7 +438,7 @@ void initialize(mxArray *plhs[], const mxArray *platform, const mxArray *devices
         g_context = new OCLContext(*g_platform);
         dbg_printf("OK\n");
 
-        dbg_printf("Adding devices: ");
+        dbg_printf("Adding devices: \n");
         std::vector<cl_device_id> available_devices = g_platform->get_device_ids(); 
 
         len = mxGetNumberOfElements(devices);
@@ -443,7 +451,7 @@ void initialize(mxArray *plhs[], const mxArray *platform, const mxArray *devices
 
         g_context->create();
 
-        dbg_printf("Creating program object: ");
+        dbg_printf("Creating program object: \n");
         g_program = new OCLProgram(*g_context);
 
         g_queues.resize(len);
@@ -451,10 +459,9 @@ void initialize(mxArray *plhs[], const mxArray *platform, const mxArray *devices
             device_idx = p_data_uint32[j];
             g_queues[j] = new OCLCommandQueue(*g_context, available_devices[device_idx]);
         }
-        
+
         return_value = 1;
         dbg_printf("OK\n");
-
     } catch(OCLError err) {
         dbg_printf("FAIL\n");
 		std::cout << "initialize: Error " << err.m_code << ": " << err.m_message << " (" << err.m_notes << ")" << std::endl;
@@ -562,19 +569,18 @@ void create_buffer(mxArray *plhs[], const mxArray *mode, const mxArray *sz) {
     try {        
         len = g_buffers.size();
         dbg_printf("Size of buffer = %d\n", len);
-
+       
         OCLBuffer *b = new OCLBuffer(*g_context, flags, nSz);
-        b->create();
 
-	//Check to see if we have a free buffer index first:
-	if (g_free_buffer_pool.empty()) {
-           g_buffers.push_back(b);
-	} else {
-	   unsigned int freeidx = g_free_buffer_pool[g_free_buffer_pool.size()-1];
-	   g_free_buffer_pool.pop_back();
-	   g_buffers[freeidx] = b;
-	   len = static_cast<int>(freeidx);
-	}
+	    //Check to see if we have a free buffer index first:
+	    if (g_free_buffer_pool.empty()) {
+             g_buffers.push_back(b);
+	    } else {
+	        unsigned int freeidx = g_free_buffer_pool[g_free_buffer_pool.size()-1];
+	        g_free_buffer_pool.pop_back();
+	        g_buffers[freeidx] = b;
+	        len = static_cast<int>(freeidx);
+        } 
     } catch (OCLError err) {
         dbg_printf("FAIL\n");
         std::cout << "create_buffer: Error " << err.m_code << ": " << err.m_message << " (" << err.m_notes << ")" << std::endl;
@@ -592,21 +598,24 @@ void destroy_buffer(mxArray *plhs[], const mxArray *buffer_id) {
 
     int returnval = 0;
     try {
-	if ((idx < 0) || (idx >= g_buffers.size())) {
-	  //throw idx;
-	  return;  //Already de-allocated
-	}
-	delete g_buffers[idx];
-	g_buffers[idx] = 0;
-	g_free_buffer_pool.push_back(idx);
-	returnval = 1;
+	    if ((idx < 0) || (idx >= g_buffers.size())) {
+	        //throw idx;
+	        return;  //Already de-allocated
+	    }
+
+	    if (g_buffers[idx] == 0) return;  //Already de-allocated. 
+	
+	    delete g_buffers[idx];
+	    g_buffers[idx] = 0;
+	    g_free_buffer_pool.push_back(idx);
+	    returnval = 1;
     } catch (OCLError err) {
         dbg_printf("FAIL\n");
         std::cout << "destroy_buffer: Error " << err.m_code << ": " << err.m_message << " (" << err.m_notes << ")" << std::endl;
         mexErrMsgTxt("Runtime error! (See error message above)");        
     } catch (unsigned int i) {
-	std::cout << "Invalid buffer id value " << i << std::endl;
-	std::cout << "Current buffer size " << g_buffers.size() << std::endl;
+	    std::cout << "Invalid buffer id value " << i << std::endl;
+	    std::cout << "Current buffer size " << g_buffers.size() << std::endl;
         mexErrMsgTxt("Runtime error! (See error message above)");        
     } catch (...) {
         dbg_printf("FAIL\n");
