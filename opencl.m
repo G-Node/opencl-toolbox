@@ -1,3 +1,27 @@
+% opencl class creates a basic interface to the OpenCL device + platform
+% This class is responsible for setting up the device/platform to use,
+% for adding and building the OpenCL source files, and for forcing a 
+% "wait" to occur to allow all operations pending on the GPGPU to finish.
+%
+% Note: You may only create one instance of this class. Multiple instances
+% of this class share the same device state. So, don't attempt to utilize
+% multiple instances of this class. It doesn't provide any value.
+% 
+% All cleanup and device release calls are handled automatically when you
+% quit MATLAB or call "clear all"
+%
+%
+% Please refer to the member functions for additional details:
+%   opencl/opencl
+%   opencl/initialize
+%   opencl/addfile
+%   opencl/build
+%   opencl/wait
+%
+% Author: Radford Ray Juang
+%
+
+
 % Copyright (C) 2011 by Radford Ray Juang
 % 
 % Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -31,8 +55,20 @@ classdef opencl < handle
         
         function this = opencl()
         % Creates an OpenCL object with retrieved information about
-        % availble platform and indices.
+        % availble platform and indices. Calling this does not affect 
+	% the previous state of the OpenCL platform.
         %        
+	% For example:
+	%   ocl = opencl();
+	% 
+	% The member attribute .platforms is set to contain information
+	% about the available platform. Example:
+	% 
+	%   disp(ocl.platforms) 
+	%   disp(ocl.platforms(1))
+        %   disp(ocl.platforms(1).devices)
+        %	
+
             this.platforms = openclcmd();            
         end
         
@@ -52,6 +88,18 @@ classdef opencl < handle
         % (where first index is 1). If unspecified, the first device is 
         % used. 
         %
+	% Note: Calling this function wipes out the previous state of the
+	% interface mex and resets the GPGPU state.
+	% 
+	% Example:
+	% 
+	%   ocl = opencl();
+	%   ocl.initialize(1,2)
+	% 
+	% Set OpenCL to use platform 1 and device 2. Platform 1 information
+	% is available in the member attribute: ocl.platforms(1)
+	% and device 2 is available in the member attribute: ocl.platforms(1).devices(2)
+	%
             if nargin < 2,
                 platform = [];
             end
@@ -83,7 +131,17 @@ classdef opencl < handle
             % 
             %  Includes the given cl file to be built and sent to the GPGPU
             %
-            
+            % Example:
+	    % 
+	    %  ocl = opencl();
+	    %  ocl.initialize(1,1);
+	    %  ocl.addfile('cl/simple_add.cl');
+	    %  ocl.addfile('cl/another_file.cl');
+	    %  ocl.addfile('cl/another_file2.cl');
+	    %  ocl.build();
+	    %
+	    % See also opencl/build
+
             this.files_loaded{end+1} = filename;
             openclcmd('addfile', filename);
         end
@@ -92,7 +150,11 @@ classdef opencl < handle
             % build(obj)
             % 
             % Build the opencl files and send to GPGPU.
-            %
+            % Note: Only opencl files added with addfile are compiled
+	    % and sent to the GPGPU
+	    %
+	    % See also opencl/addfile
+
             openclcmd('build');
             this.built = 1; 
         end
@@ -101,10 +163,25 @@ classdef opencl < handle
             % wait(obj)
             % wait(obj, device)
             % 
-            % Waits for the index of the device (first index is 1) 
+            % Waits for device with the given index (first index is 1) 
             % to complete all execution and memory operations.
             %
-            
+	    % For example:
+	    %   ocl = opencl();
+	    %   ocl.initialize(1,[1,3])
+	    %     ...
+	    %   ocl.wait(2)   
+	    % 
+	    % This example initializes platform 1 and devices 1 and 3.
+	    % Then the wait command forces a wait on the second device specified
+	    % (device 3).
+	    %
+	    %   ocl.wait(1)  
+	    % 
+	    % will cause a wait until the first device (device 1) finishes all
+	    % execution and memory transfer operations.
+	    %
+
             if nargin < 2,
                 device_id = [];
             end
