@@ -83,6 +83,9 @@ classdef clbuffer < handle
             data = feval(self.type, data);
             openclcmd('set_buffer', self.device-1, self.id, data);
         end
-
+        
+        function delete(self)
+            openclcmd('destroy_buffer', self.id);
+        end
     end
 end

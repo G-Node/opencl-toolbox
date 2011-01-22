@@ -573,6 +573,7 @@ void create_buffer(mxArray *plhs[], const mxArray *mode, const mxArray *sz) {
 	   unsigned int freeidx = g_free_buffer_pool[g_free_buffer_pool.size()-1];
 	   g_free_buffer_pool.pop_back();
 	   g_buffers[freeidx] = b;
+	   len = static_cast<int>(freeidx);
 	}
     } catch (OCLError err) {
         dbg_printf("FAIL\n");
@@ -588,10 +589,12 @@ void create_buffer(mxArray *plhs[], const mxArray *mode, const mxArray *sz) {
 
 void destroy_buffer(mxArray *plhs[], const mxArray *buffer_id) {
     unsigned int idx = static_cast<int>(mxGetScalar(buffer_id) );
+
     int returnval = 0;
     try {
 	if ((idx < 0) || (idx >= g_buffers.size())) {
-	  throw idx;
+	  //throw idx;
+	  return;  //Already de-allocated
 	}
 	delete g_buffers[idx];
 	g_buffers[idx] = 0;
