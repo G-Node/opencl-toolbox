@@ -51,6 +51,8 @@ static OCLProgram  *g_program  = 0;            //Pointer to program (kernels) to
 static std::vector<OCLBuffer *> g_buffers;       //Vector of buffers
 static std::vector<OCLCommandQueue*> g_queues; //Vector of pointers to command queues
 static std::vector<OCLKernel*> g_kernels;      //Vector of pointers to kernels
+static std::vector<unsigned int> g_free_buffer_pool; //Array of free indices in g_buffers
+
 
 /********************************
  * CLEANUP FUNCTION             *
@@ -78,6 +80,7 @@ static void cleanup(void) {
     g_kernels.clear();
     g_queues.clear();
     g_buffers.clear();
+    g_free_buffer_pool.clear();
 
     delete g_context;
     delete g_platform;
@@ -105,6 +108,8 @@ void execute_kernel(mxArray *plhs[], const mxArray *device_id, const mxArray *ke
 
 void set_kernel_args(mxArray *plhs[], const mxArray *kernel_id, 
     const mxArray *arg_num, const mxArray *buffer_id, const mxArray *data, const mxArray *size);
+
+void destroy_buffer(mxArray *plhs[], const mxArray *bufferId);
 
 /********************************
  * MAIN MEX FUNCTION            *
@@ -170,6 +175,17 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
             mexErrMsgIdAndTxt("MATLAB:openclcmd:nInput", "Not enough input arguments");
 
         create_buffer(plhs, prhs[1], prhs[2]);   
+    } else if (strcmp(&buffer[0], "destroy_buffer") == 0) {
+        //openclcmd('destroy_buffer', buffer_id)
+        //  Destroy the buffer with buffer_id and free up any allocated resources   
+        //      buffer_id: integer greater than or equal to 0 specifying the index
+	//        of the buffer to delete.
+	//
+        //  Returns true if success
+        if (nrhs < 2)
+            mexErrMsgIdAndTxt("MATLAB:openclcmd:nInput", "Not enough input arguments");
+
+        destroy_buffer(plhs, prhs[1]);   
 
     } else if (strcmp(&buffer[0], "set_buffer") == 0 ) {
         //openclcmd('set_buffer', device_idx, buffer_idx, data)
@@ -230,10 +246,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
         //  openclcmd('set_kernel_args',  kernel_id, arg_num, buffer_id, [], 0 ) 
         //
         //Setting kernel argument to constant data:
-        //  set_kernel_args( kernel_id, arg_num, -1, data, 0 )
+        //  openclcmd('set_kernel_args',  kernel_id, arg_num, -1, data, 0 )
         //
         //Setting kernel argument to local variable type:
-        //  set_kernel_args( kernel_id, arg_num, -1, [], nBytes )
+        //  openclcmd('set_kernel_args',  kernel_id, arg_num, -1, [], nBytes )
         //
 
         if (nrhs < 6)
@@ -384,11 +400,11 @@ void fetch_opencl_devices(int nlhs, mxArray *plhs[], int nrhs, const mxArray *pr
 		}
         
 	} catch (OCLError err) {        
-		std::cout << "Error " << err.m_code << ": " << err.m_message << " (" << err.m_notes << ")" << std::endl;
-        mexErrMsgTxt("Runtime error:");        
+		std::cout << "fetch_opencl_devices: Error " << err.m_code << ": " << err.m_message << " (" << err.m_notes << ")" << std::endl;
+        mexErrMsgTxt("Runtime error! (See error message above)");        
 	} catch (...) {
-		std::cout << "Unknown error occurred!" << std::endl;
-        mexErrMsgTxt("Runtime error:");
+		std::cout << "fetch_opencl_devices: Unknown error occurred!" << std::endl;
+        mexErrMsgTxt("Runtime error! (See error message above)");        
 	}        
 }
 
@@ -441,12 +457,12 @@ void initialize(mxArray *plhs[], const mxArray *platform, const mxArray *devices
 
     } catch(OCLError err) {
         dbg_printf("FAIL\n");
-		std::cout << "Error " << err.m_code << ": " << err.m_message << " (" << err.m_notes << ")" << std::endl;
-        mexErrMsgTxt("Runtime error:");
+		std::cout << "initialize: Error " << err.m_code << ": " << err.m_message << " (" << err.m_notes << ")" << std::endl;
+        mexErrMsgTxt("Runtime error! (See error message above)");        
     } catch (...) {
         dbg_printf("FAIL\n");
-		std::cout << "Unknown error occurred!" << std::endl;
-        mexErrMsgTxt("Runtime error:");
+		std::cout << "initialize: Unknown error occurred!" << std::endl;
+        mexErrMsgTxt("Runtime error! (See error message above)");        
     }
 
     plhs[0] = mxCreateLogicalScalar(return_value);    
@@ -466,12 +482,12 @@ void add_file(mxArray *plhs[], const mxArray *filename) {
         return_value = 1;
     } catch(OCLError err) {
         dbg_printf("FAIL\n");
-        std::cout << "Error " << err.m_code << ": " << err.m_message << " (" << err.m_notes << ")" << std::endl;
-        mexErrMsgTxt("Runtime error:");
+        std::cout << "add_file: Error " << err.m_code << ": " << err.m_message << " (" << err.m_notes << ")" << std::endl;
+        mexErrMsgTxt("Runtime error! (See error message above)");        
     } catch (...) {
         dbg_printf("FAIL\n");
-        std::cout << "Unknown error occurred!" << std::endl;
-        mexErrMsgTxt("Runtime error:");
+        std::cout << "add_file: Unknown error occurred!" << std::endl;
+        mexErrMsgTxt("Runtime error! (See error message above)");        
     }
     plhs[0] = mxCreateLogicalScalar(return_value);
 }
@@ -503,12 +519,12 @@ void build(mxArray *plhs[]) {
         return_value = 1;
     } catch(OCLError err) {
         dbg_printf("FAIL\n");
-        std::cout << "Error " << err.m_code << ": " << err.m_message << " (" << err.m_notes << ")" << std::endl;
-        mexErrMsgTxt("Runtime error:");
+        std::cout << "build: Error " << err.m_code << ": " << err.m_message << " (" << err.m_notes << ")" << std::endl;
+        mexErrMsgTxt("Runtime error! (See error message above)");        
     } catch (...) {
         dbg_printf("FAIL\n");
-        std::cout << "Unknown error occurred!" << std::endl;
-        mexErrMsgTxt("Runtime error:");
+        std::cout << "build: Unknown error occurred!" << std::endl;
+        mexErrMsgTxt("Runtime error! (See error message above)");        
     }
 
     plhs[0] = mxCreateLogicalScalar(return_value);
@@ -549,17 +565,52 @@ void create_buffer(mxArray *plhs[], const mxArray *mode, const mxArray *sz) {
 
         OCLBuffer *b = new OCLBuffer(*g_context, flags, nSz);
         b->create();
-        g_buffers.push_back(b);
+
+	//Check to see if we have a free buffer index first:
+	if (g_free_buffer_pool.empty()) {
+           g_buffers.push_back(b);
+	} else {
+	   unsigned int freeidx = g_free_buffer_pool[g_free_buffer_pool.size()-1];
+	   g_free_buffer_pool.pop_back();
+	   g_buffers[freeidx] = b;
+	}
     } catch (OCLError err) {
         dbg_printf("FAIL\n");
-        std::cout << "Error " << err.m_code << ": " << err.m_message << " (" << err.m_notes << ")" << std::endl;
-        mexErrMsgTxt("Runtime error:");
+        std::cout << "create_buffer: Error " << err.m_code << ": " << err.m_message << " (" << err.m_notes << ")" << std::endl;
+        mexErrMsgTxt("Runtime error! (See error message above)");        
     } catch (...) {
         dbg_printf("FAIL\n");
-        std::cout << "Unknown error occurred!" << std::endl;
-        mexErrMsgTxt("Runtime error:");
+        std::cout << "create_buffer: Unknown error occurred!" << std::endl;
+        mexErrMsgTxt("Runtime error! (See error message above)");        
     }
     plhs[0] = mxCreateDoubleScalar(len);
+}
+
+void destroy_buffer(mxArray *plhs[], const mxArray *buffer_id) {
+    unsigned int idx = static_cast<int>(mxGetScalar(buffer_id) );
+    int returnval = 0;
+    try {
+	if ((idx < 0) || (idx >= g_buffers.size())) {
+	  throw idx;
+	}
+	delete g_buffers[idx];
+	g_buffers[idx] = 0;
+	g_free_buffer_pool.push_back(idx);
+	returnval = 1;
+    } catch (OCLError err) {
+        dbg_printf("FAIL\n");
+        std::cout << "destroy_buffer: Error " << err.m_code << ": " << err.m_message << " (" << err.m_notes << ")" << std::endl;
+        mexErrMsgTxt("Runtime error! (See error message above)");        
+    } catch (unsigned int i) {
+	std::cout << "Invalid buffer id value " << i << std::endl;
+	std::cout << "Current buffer size " << g_buffers.size() << std::endl;
+        mexErrMsgTxt("Runtime error! (See error message above)");        
+    } catch (...) {
+        dbg_printf("FAIL\n");
+        std::cout << "destroy_buffer: Unknown error occurred!" << std::endl;
+        mexErrMsgTxt("Runtime error! (See error message above)");        
+    }
+    plhs[0] = mxCreateLogicalScalar(returnval);
 }
 
 void set_buffer(mxArray *plhs[], const mxArray *deviceNumber, const mxArray *bufferNumber, const mxArray *data) {
@@ -588,12 +639,12 @@ void set_buffer(mxArray *plhs[], const mxArray *deviceNumber, const mxArray *buf
         return_val = 1;
     } catch(OCLError err) {
         dbg_printf("FAIL\n");
-        std::cout << "Error " << err.m_code << ": " << err.m_message << " (" << err.m_notes << ")" << std::endl;
-        mexErrMsgTxt("Runtime error:");
+        std::cout << "set_buffer: Error " << err.m_code << ": " << err.m_message << " (" << err.m_notes << ")" << std::endl;
+        mexErrMsgTxt("Runtime error! (See error message above)");        
     } catch(...) {
         dbg_printf("FAIL\n");
-        std::cout << "Unknown error occurred!" << std::endl;
-        mexErrMsgTxt("Runtime error:");
+        std::cout << "set_buffer: Unknown error occurred!" << std::endl;
+        mexErrMsgTxt("Runtime error! (See error message above)");        
     }
     plhs[0] = mxCreateLogicalScalar(return_val);
 }
@@ -607,12 +658,12 @@ void wait_queue(mxArray *plhs[], const mxArray *deviceNumber) {
         return_val = 1;
     } catch(OCLError err) {
         dbg_printf("FAIL\n");
-        std::cout << "Error " << err.m_code << ": " << err.m_message << " (" << err.m_notes << ")" << std::endl;
-        mexErrMsgTxt("Runtime error:");
+        std::cout << "wait_queue: Error " << err.m_code << ": " << err.m_message << " (" << err.m_notes << ")" << std::endl;
+        mexErrMsgTxt("Runtime error! (See error message above)");        
     } catch(...) {
         dbg_printf("FAIL\n");
-        std::cout << "Unknown error occurred!" << std::endl;
-        mexErrMsgTxt("Runtime error:");
+        std::cout << "wait_queue: Unknown error occurred!" << std::endl;
+        mexErrMsgTxt("Runtime error! (See error message above)");        
     }
 
     plhs[0] = mxCreateLogicalScalar(return_val);
@@ -674,8 +725,8 @@ void get_buffer(mxArray *plhs[], const mxArray *deviceNumber, const mxArray *buf
          arr = mxCreateLogicalArray(2, dims);                
     } else {
         dbg_printf("FAIL\n");
-        std::cout << "Unsupported data type!" << std::endl;
-        mexErrMsgTxt("Runtime error:");
+        std::cout << "get_buffer: Unsupported data type!" << std::endl;
+        mexErrMsgTxt("Runtime error! (See error message above)");        
         //Unsupported!
         return;
     }
@@ -687,12 +738,12 @@ void get_buffer(mxArray *plhs[], const mxArray *deviceNumber, const mxArray *buf
         plhs[0] = arr;
     } catch(OCLError err) {
         dbg_printf("FAIL\n");
-        std::cout << "Error " << err.m_code << ": " << err.m_message << " (" << err.m_notes << ")" << std::endl;
-        mexErrMsgTxt("Runtime error:");
+        std::cout << "get_buffer: Error " << err.m_code << ": " << err.m_message << " (" << err.m_notes << ")" << std::endl;
+        mexErrMsgTxt("Runtime error! (See error message above)");        
     } catch(...) {
         dbg_printf("FAIL\n");
-        std::cout << "Unknown error occurred!" << std::endl;
-        mexErrMsgTxt("Runtime error:");
+        std::cout << "get_buffer: Unknown error occurred!" << std::endl;
+        mexErrMsgTxt("Runtime error! (See error message above)");        
     }
 }
 
@@ -734,13 +785,13 @@ void create_kernels(mxArray *plhs[], const mxArray *local, const mxArray *global
         g_kernels[len] = kernel;
     } catch(OCLError err) {
         dbg_printf("FAIL\n");
-        std::cout << "Error " << err.m_code << ": " << err.m_message << " (" << err.m_notes << ")" << std::endl;
-        mexErrMsgTxt("Runtime error:");
+        std::cout << "create_kernels: Error " << err.m_code << ": " << err.m_message << " (" << err.m_notes << ")" << std::endl;
+        mexErrMsgTxt("Runtime error! (See error message above)");        
         len = -1;
     } catch(...) {
         dbg_printf("FAIL\n");
-        std::cout << "Unknown error occurred!" << std::endl;
-        mexErrMsgTxt("Runtime error:");
+        std::cout << "create_kernels: Unknown error occurred!" << std::endl;
+        mexErrMsgTxt("Runtime error! (See error message above)");        
         len = -1;
     }
 
@@ -757,12 +808,12 @@ void execute_kernel(mxArray *plhs[], const mxArray *device_id, const mxArray *ke
         return_val = 1;
     } catch(OCLError err) {
         dbg_printf("FAIL\n");
-        std::cout << "Error " << err.m_code << ": " << err.m_message << " (" << err.m_notes << ")" << std::endl;
-        mexErrMsgTxt("Runtime error:");
+        std::cout << "execute_kernel: Error " << err.m_code << ": " << err.m_message << " (" << err.m_notes << ")" << std::endl;
+        mexErrMsgTxt("Runtime error! (See error message above)");        
     } catch(...) {
         dbg_printf("FAIL\n");
-        std::cout << "Unknown error occurred!" << std::endl;
-        mexErrMsgTxt("Runtime error:");
+        std::cout << "execute_kernel: Unknown error occurred!" << std::endl;
+        mexErrMsgTxt("Runtime error! (See error message above)");        
     }
     plhs[0] = mxCreateLogicalScalar(return_val);
 }
@@ -815,12 +866,12 @@ void set_kernel_args(mxArray *plhs[], const mxArray *kernel_id,
         return_val = 1;
     } catch(OCLError err) {
         dbg_printf("FAIL\n");
-        std::cout << "Error " << err.m_code << ": " << err.m_message << " (" << err.m_notes << ")" << std::endl;
-        mexErrMsgTxt("Runtime error:");
+        std::cout << "set_kernel_args: Error " << err.m_code << ": " << err.m_message << " (" << err.m_notes << ")" << std::endl;
+        mexErrMsgTxt("Runtime error! (See error message above)");        
     } catch(...) {
         dbg_printf("FAIL\n");
-        std::cout << "Unknown error occurred!" << std::endl;
-        mexErrMsgTxt("Runtime error:");
+        std::cout << "set_kernel_args: Unknown error occurred!" << std::endl;
+        mexErrMsgTxt("Runtime error! (See error message above)");        
     }
     plhs[0] = mxCreateLogicalScalar(return_val);
 }
