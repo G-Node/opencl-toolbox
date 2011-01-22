@@ -29,3 +29,18 @@ ocl.wait();
 values = z.get();
 values
 
+clear x y z p;
+
+% Test clobject
+x = clobject(single(1:10));
+y = clobject(single(11:20));
+z = clobject(zeros(1,10, 'single'));
+
+addkernel(x,y,z, uint32(10));
+values = z.get();
+
+x.get()
+y.get()
+values
+
+

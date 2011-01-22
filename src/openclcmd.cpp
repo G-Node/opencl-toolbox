@@ -36,8 +36,8 @@
 
 using namespace ray::opencl;
 
-#define dbg_printf  printf    //Enable debug print statements
-//#define dbg_printf              //Remove debug print statements
+//#define dbg_printf  printf    //Enable debug print statements
+#define dbg_printf              //Remove debug print statements
 
 /****************************************************
  * GLOBAL VARIABLES DESIGNATING STATE OF MEX FILE   *

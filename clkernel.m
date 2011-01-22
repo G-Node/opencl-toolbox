@@ -1,4 +1,22 @@
 % Copyright (C) 2011 by Radford Ray Juang
+% clkernel is a class that represents an OpenCL kernel object.
+% It is used to create a function out of the CL kernels that were compiled
+% and sent to the GPGPU device using the opencl.addfile and opencl.build
+% functions. 
+% 
+% An example usage:
+%
+% ocl = opencl();
+% ocl.initialize();
+%
+% ocl.addfile('cl/simple_add.cl');
+% ocl.build();
+%
+% k = clkernel('add');
+%
+%
+%
+
 % 
 % Permission is hereby granted, free of charge, to any person obtaining a copy
 % of this software and associated documentation files (the "Software"), to deal
@@ -94,7 +112,12 @@ classdef clkernel < handle
                         %Local variable type:                        
                         nbytes = argval.num_bytes;
                     end
-                    
+                elseif strcmp(S.class, 'clobject')
+                    bufferid = argval.buffer.id;
+                    if bufferid < 0,
+                        %Local variable type:                        
+                        nbytes = argval.num_bytes;
+                    end                    
                 elseif strcmp(S.class, 'double') || ...
                        strcmp(S.class, 'single') || ...
                        strcmp(S.class, 'char') || ...
