@@ -85,21 +85,38 @@ classdef opencl < handle
     methods
         
         function this = opencl()
+        % opencl()
+        %
         % Creates an OpenCL object with retrieved information about
         % availble platform and indices. Calling this does not affect 
-	% the previous state of the OpenCL platform.
+	    % the previous state of the OpenCL platform.
         %        
-	% For example:
-	%   ocl = opencl();
-	% 
-	% The member attribute .platforms is set to contain information
-	% about the available platform. Example:
-	% 
-	%   disp(ocl.platforms) 
-	%   disp(ocl.platforms(1))
+	    % For example:
+	    %   ocl = opencl();
+	    % 
+	    % The member attribute .platforms is set to contain information
+	    % about the available platform. Example:
+	    % 
+	    %   disp(ocl.platforms) 
+	    %   disp(ocl.platforms(1))
         %   disp(ocl.platforms(1).devices)
         %	
-
+        % FAQ: 
+        % Q: What is a platform? 
+        % A: A platform is simply the library that implements the 
+        % OpenCL functionality. It is installed when you install the
+        % OpenCL device driver from the vendor. Each platform can
+        % communicate with one or more devices. For example, common
+        % platforms are:
+        %   - the AMD/ATI Stream platform (which can talk to CPUs and ATI
+        %     GPGPUs)
+        %   - the NVIDIA platform (which can talk with NVIDIA GPGPUs)
+        %   - the Intel platform (which can talk to CPUs for now)
+        %
+        % Each platform is associated with one or more devices. The device
+        % is the physical hardware that contains the GPU/CPU computing device
+        % we want to use.
+        %
             this.platforms = openclcmd();            
         end
         
@@ -116,21 +133,21 @@ classdef opencl < handle
         % value and the first platform is used.
         %
         % DEVICES is the indices of the devices in the platform to use 
-        % (where first index is 1). If unspecified, the first device is 
-        % used. 
+        % (where first index is 1). If unspecified, the first device on
+        % the selected PLATFORM is used. 
         %
-	% Note: Calling this function wipes out the previous state of the
-	% interface mex and resets the GPGPU state.
-	% 
-	% Example:
-	% 
-	%   ocl = opencl();
-	%   ocl.initialize(1,2)
-	% 
-	% Set OpenCL to use platform 1 and device 2. Platform 1 information
-	% is available in the member attribute: ocl.platforms(1)
-	% and device 2 is available in the member attribute: ocl.platforms(1).devices(2)
-	%
+    	% Note: Calling this function wipes out the previous state of the
+	    % interface mex and resets the GPGPU state.
+    	% 
+    	% Example:
+    	% 
+    	%   ocl = opencl();
+    	%   ocl.initialize(1,2)
+    	% 
+    	% Set OpenCL to use platform 1 and device 2. Platform 1 information
+    	% is available in the member attribute: ocl.platforms(1)
+    	% and device 2 is available in the member attribute: ocl.platforms(1).devices(2)
+    	%
             if nargin < 2,
                 platform = [];
             end
@@ -158,11 +175,14 @@ classdef opencl < handle
         end
         
         function addfile(this, filename)
-            %  addfile(obj, filename)
-            % 
-            %  Includes the given cl file to be built and sent to the GPGPU
-            %
-            % Example:
+        % addfile(obj, filename)
+        % 
+        % Includes the given cl file to be built and sent to the GPGPU.
+        % This function only compiles a list of source files we want to
+        % include. Compilation and sending the program to the device does
+        % not occur until build is called.
+        %
+        % Example:
 	    % 
 	    %  ocl = opencl();
 	    %  ocl.initialize(1,1);
@@ -178,10 +198,10 @@ classdef opencl < handle
         end
         
         function build(this)
-            % build(obj)
-            % 
-            % Build the opencl files and send to GPGPU.
-            % Note: Only opencl files added with addfile are compiled
+        % build(obj)
+        % 
+        % Build the opencl files and send to GPGPU.
+        % Note: Only opencl files added with addfile are compiled
 	    % and sent to the GPGPU
 	    %
 	    % See also opencl/addfile
@@ -191,12 +211,12 @@ classdef opencl < handle
         end
         
         function wait(this, device_id)
-            % wait(obj)
-            % wait(obj, device)
-            % 
-            % Waits for device with the given index (first index is 1) 
-            % to complete all execution and memory operations.
-            %
+        % wait(obj)
+        % wait(obj, device)
+        % 
+        % Waits for device with the given index (first index is 1) 
+        % to complete all execution and memory operations.
+        %
 	    % For example:
 	    %   ocl = opencl();
 	    %   ocl.initialize(1,[1,3])
