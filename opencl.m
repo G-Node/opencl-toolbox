@@ -20,6 +20,37 @@
 %
 % Author: Radford Ray Juang
 %
+% Example usage:
+%   ocl = opencl();  % Fetch a list of available platforms and devices
+%
+%   disp(ocl);  % Inspect the platform and device you want to use
+%               % All platforms available are in the member attribute
+%               % .platforms )
+%               
+%   disp(ocl.platforms(1) );
+%
+%   % Within each platform, there there is a list of devices associated with
+%   % the platform. You can view this in the .devices attribute for each
+%   % platform
+%   
+%   disp(ocl.platforms(1).devices);
+%   disp(ocl.platforms(1).devices(1));
+%
+%   % Assuming we want to pick platform 1 and device 1 (as viewed above):
+%
+%   platform = 1; 
+%   device = 1;
+%   ocl.initialize(platform, device);
+%
+%   % Now let's load the kernel cl/simple_add.cl
+%   ocl.addfile('cl/simple_add.cl');
+%  
+%   % You can add additional files you want to use
+%   % ocl.addfile('cl/another_file.cl');
+%   % ocl.addfile('cl/another_file2.cl');
+%
+%   ocl.build();   % Now let's build our kernel and send to the GPU device
+%  
 
 
 % Copyright (C) 2011 by Radford Ray Juang

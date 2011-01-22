@@ -73,14 +73,6 @@ static void cleanup(void) {
     }
 
     for (int i=0; i<g_buffers.size(); ++i) {
-    	/*if (g_buffers[i]) {
-	        if (g_buffers[i]->m_host_ptr) {
-
-	            free(g_buffers[i]->m_host_ptr);
-	            g_buffers[i]->m_host_ptr = 0;
-	        }
-	    }*/
-
         delete g_buffers[i];
         g_buffers[i] = 0;        
     }
