@@ -88,7 +88,7 @@ classdef opencl < handle
         % opencl()
         %
         % Creates an OpenCL object with retrieved information about
-        % availble platform and indices. Calling this does not affect 
+        % availble platform and devices. Calling this does not affect 
 	    % the previous state of the OpenCL platform.
         %        
 	    % For example:
