@@ -44,6 +44,28 @@ opencl_lib_dir: is the directory containing libOpenCL.so (or OpenCL.lib in Windo
 see test_openclmatlab.m  for examples
 or if you want to use the raw interface, see test_openclcmd.m
 
+==========[ TROUBLESHOOTING ]========================
+Under Linux, if you get the message like: 
+
+   bin/glnxa64/../../sys/os/glnxa64/libstdc++.so.6: version `GLIBCXX_3.4.11' not found (required by ... 
+
+This can be fixed as follows:
+
+1. Assuming your matlab install is in /sw/matlab/r2010b/ 
+   
+   cd /sw/matlab/r2010b/sys/os/glnxa64
+
+(on your system, it may be glnx86... depending on which CPU architecture you are using)
+
+2. Remove the symlink libstdc++.so.6 and move the outdated libraries into another folder
+   rm libstdc++.so.6
+   mkdir outdated
+   mv libstdc++.so.* outdated
+   mv libgcc_s.so.1 outdated
+
+3. Restart matlab and rerun make.
+
+
 
 ==========[ To Do list ] =============================
 

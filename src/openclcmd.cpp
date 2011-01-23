@@ -428,10 +428,12 @@ void fetch_opencl_devices(int nlhs, mxArray *plhs[], int nrhs, const mxArray *pr
                 arr = mxCreateDoubleMatrix(1, d.m_properties.max_work_item_dimensions, mxREAL);
                     double *pdata = (double *) mxGetData(arr);
 
-                    //Not sure why changing this to a for loop causes mex to crash ??
-                    pdata[0] = d.m_properties.max_work_item_sizes[0];
-                    pdata[1] = d.m_properties.max_work_item_sizes[1];
-                    pdata[2] = d.m_properties.max_work_item_sizes[2];
+                    for (int k=0; k<d.m_properties.max_work_item_dimensions; ++k) {
+                        pdata[k] = d.m_properties.max_work_item_sizes[k];
+                    }
+                    //pdata[0] = d.m_properties.max_work_item_sizes[0];
+                    //pdata[1] = d.m_properties.max_work_item_sizes[1];
+                    //pdata[2] = d.m_properties.max_work_item_sizes[2];
 
                     mxSetField(dev_arr, j, device_field_names[DEV_FIELD_MAX_WORK_ITEM_SIZES], arr);
 
