@@ -1,3 +1,37 @@
+% clbuffer is an encapsulation of an OpenCL buffer object. 
+% Buffers are associated with a specific device and represents
+% memory available for a variable to hold its value.
+% 
+% To allocate a clBuffer, you need to know the type and the 
+% number of elements in the type that you are going to store.
+% For example, a vector of N doubles would be initialized as follows:
+%
+%   bufA = clbuffer('rw', 'double', N, deviceIdx)
+% 
+% where deviceIdx can be omitted (and would default to 1). deviceIdx specifies
+% the index of the device in the device id array that was passed in the call
+% of opencl.initialize( ) 
+% 
+% To view values inside a buffer:
+%   values = bufA.get()
+%
+% To set values inside a buffer:
+%   bufA.set(values)
+%
+% It is important to note that the get/set operations are blocking.
+%
+% Finally, to free a buffer:
+%   clear bufA;
+%
+% See also: clbuffer/clbuffer
+%           clbuffer/get
+%           clbuffer/set
+%           clbuffer/delete
+%
+% Author: Radford Ray Juang
+
+
+%
 % Copyright (C) 2011 by Radford Ray Juang
 % 
 % Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -30,6 +64,28 @@ classdef clbuffer < handle
     
     methods
         function self = clbuffer(mode, type, nelems, device)
+        %  clbuffer(mode, type, nelems)
+        %  clbuffer(mode, type, nelems, device)
+        %
+        %  Create a buffer of the given specifications:
+        %   mode :  can be 'ro' (read-only), 
+        %                  'wo' (write-only),
+        %                  'rw' (read-write)
+        %   type :  can be 'int64', 'uint64', 'double', 
+        %                  'int32', 'uint32', 'single',
+        %                  'int16', 'uint16', 
+        %                  'int8', 'uint8', 'char', 'logical',
+        %                  'local'
+        %           'local' means the buffer is cache space on the device
+        %            to be shared between local workgroups in a compute unit
+        %
+        %  nelems : number of elements of the specified type. for 'local',
+        %           this is the number of bytes to reserve for the local
+        %           cache.
+        %  
+        %  device : (default 1) index of the device initialized to create the
+        %           buffer for
+        %
             if nargin < 4,
                 device = [];
             end
@@ -69,6 +125,12 @@ classdef clbuffer < handle
         end
         
         function data = get(self)
+        % obj.get()
+        %
+        % Fetches the memory contents of the buffer from device memory to host
+        % memory. This call is blocking and returns with the values of the
+        % buffer in the device.
+        %
             data = [];
 
             if self.id >= 0, 
@@ -77,6 +139,16 @@ classdef clbuffer < handle
         end
         
         function set(self, data)
+        % obj.set(data) 
+        % 
+        % Copies the contents of data from host memory to device memory. This
+        % call is blocking and returns after the contents have been fully
+        % transfered to the device. Note: it is important to have the correct
+        % number of elements in data. The values in data are automatically
+        % cast to the correct type. (so you can pass a double array here and
+        % it will be converted to whichever type was specified when the buffer
+        % was created)
+        %
             if self.id < 0,
                 return;
             end
@@ -86,6 +158,11 @@ classdef clbuffer < handle
         end
         
         function delete(self)
+        % delete(obj)
+        % 
+        % Deletes the specified object and frees it from memory. If already
+        % freed, the command just returns.
+        %
             openclcmd('destroy_buffer', self.id);
         end
     end
