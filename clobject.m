@@ -1,3 +1,17 @@
+% clobject is an encapsulation of an OpenCL object and is used to convert a
+% matlab object into a device object. For example:
+%
+% Given a matlab object:
+%   arr = single(1:10);
+%   buffA = clobject(arr);
+%
+% arr is now in device memory and the resulting storage buffer is in bufA.
+%
+% See clobject/clobject
+%     clobject/set
+%     clobject/get
+%     clobject/delete
+
 % Copyright (C) 2011 by Radford Ray Juang
 % 
 % Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -34,6 +48,13 @@ classdef clobject < handle
 
     methods
         function this = clobject(data, deviceid)
+        % clobject(data)
+        % clobject(data, device)
+        %
+        % Transfer data to device memory and create a clobject 
+        % representation for the data. device is the index of the device where
+        % the data is stored. If unspecified, it defaults to 1.
+        %
             this.dims = size(data);
             if nargin < 2,
                 deviceid = [];
@@ -57,12 +78,19 @@ classdef clobject < handle
         end
        
         function data = get(this)
+        % data = obj.get()
+        %
+        % Copy device memory in obj to host memory
+        %
             data = this.buffer.get();
             data = reshape(data, this.dims);
         end
 
         function set(this, data)
-
+        % obj.set(data)
+        % 
+        % Copy data in host memory to device memory. 
+        %
             S = whos('data');
             if (prod(this.dims) ~= numel(data)) || ...
                (~strcmp(this.datatype, S.class)),
@@ -78,6 +106,14 @@ classdef clobject < handle
 
             this.dims = size(data);
             this.buffer.set(data(:));
+        end
+
+        function delete(this)
+        % delete(obj)
+        % 
+        % delete the object and free all resources
+        %
+            delete(this.buffer);
         end
 
     end
