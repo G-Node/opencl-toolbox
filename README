@@ -1,11 +1,15 @@
 ==========[ OpenCL Toolbox ]============================
-Version 0.13
-Date: 01.22.2011
+Version 0.15
+Date: 01.24.2011
 Website: http://code.google.com/p/opencl-toolbox
 SVN: http://opencl-toolbox.googlecode.com/svn/trunk/
 
 ==========[ What's New ] ===============================
-
+0.15:  Updated clobject interface. 
+       Additional bug fixes noted and fixed.
+       Added destroy_buffer to openclcmd and delete( )
+          to matlab interface classes.
+       
 0.13:  Bug fix: Fixed issue with create_buffer on 
        cpu devices
 
