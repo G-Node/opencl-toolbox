@@ -24,7 +24,6 @@ p.get()
 % Validate clkernel
 addkernel = clkernel('add', [n, 0,0], [n,0,0]);
 addkernel(x,y,z,n);
-ocl.wait();
 
 values = z.get();
 values

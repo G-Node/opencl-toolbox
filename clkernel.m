@@ -152,7 +152,7 @@ classdef clkernel < handle
             end
 
             self.device = target_device;               
-            self.id = openclcmd('create_kernel', uint32(global_dim), uint32(local_dim), kernelname);
+            self.id = openclcmd('create_kernel', uint32(local_dim), uint32(global_dim), kernelname);
         end
 
         function value = subsref(self, S)
