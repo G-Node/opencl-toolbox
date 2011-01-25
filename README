@@ -5,6 +5,10 @@ Website: http://code.google.com/p/opencl-toolbox
 SVN: http://opencl-toolbox.googlecode.com/svn/trunk/
 
 ==========[ What's New ] ===============================
+0.17:  Added additional device information.
+       Bug fix: I had swapped the local and global dims.. (big oops). 
+       Started adding matlab kernels
+
 0.15:  Updated clobject interface. 
        Additional bug fixes noted and fixed.
        Added destroy_buffer to openclcmd and delete( )
