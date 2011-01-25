@@ -322,12 +322,42 @@ void fetch_opencl_devices(int nlhs, mxArray *plhs[], int nrhs, const mxArray *pr
         "max_work_item_dimensions",
         "max_work_group_size",
         "max_work_item_sizes",
+        "preferred_vector_width_char",
+        "preferred_vector_width_short",
+        "preferred_vector_width_int",
+        "preferred_vector_width_long",
+        "preferred_vector_width_float",
+        "preferred_Vector_width_double",
         "max_clock_frequency",
-        "global_mem_size",
+        "address_bits",
+        "max_read_image_args",
+        "max_write_image_args",
+        "max_mem_alloc_size",
+        "image2d_max_width",
+        "image2d_max_height",
+        "image3d_max_width",
+        "image3d_max_height",
+        "image3d_max_depth",
+        "image_support",
+        "max_parameter_size",
+        "max_samplers",
+        "mem_base_addr_align",
+        "min_data_type_align_size",
+//        "single_fp_config",
+//        "global_mem_cache_type",
+        "global_mem_cacheline_size",
         "global_mem_cache_size",
+        "global_mem_size",
         "max_constant_buffer_size",
         "max_constant_args",
-        "local_mem_size"
+//        "local_mem_type",
+        "local_mem_size",
+        "error_correction_support",
+        "profiling_timer_resolution",
+        "endian_little",
+        "available",
+        "compiler_available",
+        "platform"
     };
     
     enum { 
@@ -351,12 +381,41 @@ void fetch_opencl_devices(int nlhs, mxArray *plhs[], int nrhs, const mxArray *pr
         DEV_FIELD_MAX_WORK_ITEM_DIMENSIONS,
         DEV_FIELD_MAX_WORK_GROUP_SIZE,
         DEV_FIELD_MAX_WORK_ITEM_SIZES,
+        DEV_FIELD_PREFERRED_VECTOR_WIDTH_CHAR,
+        DEV_FIELD_PREFERRED_VECTOR_WIDTH_SHORT,
+        DEV_FIELD_PREFERRED_VECTOR_WIDTH_INT,
+        DEV_FIELD_PREFERRED_VECTOR_WIDTH_LONG,
+        DEV_FIELD_PREFERRED_VECTOR_WIDTH_FLOAT,
+        DEV_FIELD_PREFERRED_VECTOR_WIDTH_DOUBLE,
         DEV_FIELD_MAX_CLOCK_FREQUENCY,
-        DEV_FIELD_GLOBAL_MEM_SIZE,
+        DEV_FIELD_ADDRESS_BITS,
+        DEV_FIELD_MAX_READ_IMAGE_ARGS,
+        DEV_FIELD_MAX_WRITE_IMAGE_ARGS,
+        DEV_FIELD_MAX_MEM_ALLOC_SIZE,
+        DEV_FIELD_IMAGE2D_MAX_WIDTH,
+        DEV_FIELD_IMAGE2D_MAX_HEIGHT,
+        DEV_FIELD_IMAGE3D_MAX_WIDTH,
+        DEV_FIELD_IMAGE3D_MAX_HEIGHT,
+        DEV_FIELD_IMAGE3D_MAX_DEPTH,
+        DEV_FIELD_IMAGE_SUPPORT,
+        DEV_FIELD_MAX_PARAMETER_SIZE,
+        DEV_FIELD_MAX_SAMPLERS,
+        DEV_FIELD_MEM_BASE_ADDR_ALIGN,
+        DEV_FIELD_MIN_DATA_TYPE_ALIGN_SIZE,
+//        DEV_FIELD_SINGLE_FP_CONFIG,
+//        DEV_FIELD_GLOBAL_MEM_CACHE_TYPE,
+        DEV_FIELD_GLOBAL_MEM_CACHELINE_SIZE,
         DEV_FIELD_GLOBAL_MEM_CACHE_SIZE,
+        DEV_FIELD_GLOBAL_MEM_SIZE,
         DEV_FIELD_MAX_CONSTANT_BUFFER_SIZE,
         DEV_FIELD_MAX_CONSTANT_ARGS,
+//        DEV_FIELD_LOCAL_MEM_TYPE,
         DEV_FIELD_LOCAL_MEM_SIZE,
+        DEV_FIELD_ERROR_CORRECTION_SUPPORT,
+        DEV_FIELD_PROFILING_TIMER_RESOLUTION,
+        DEV_FIELD_ENDIAN_LITTLE,
+        DEV_FIELD_AVAILABLE,
+        DEV_FIELD_COMPILER_AVAILABLE,
         DEV_NUM_FIELDS
     };
     
@@ -431,20 +490,85 @@ void fetch_opencl_devices(int nlhs, mxArray *plhs[], int nrhs, const mxArray *pr
                     for (int k=0; k<d.m_properties.max_work_item_dimensions; ++k) {
                         pdata[k] = d.m_properties.max_work_item_sizes[k];
                     }
-                    //pdata[0] = d.m_properties.max_work_item_sizes[0];
-                    //pdata[1] = d.m_properties.max_work_item_sizes[1];
-                    //pdata[2] = d.m_properties.max_work_item_sizes[2];
-
                     mxSetField(dev_arr, j, device_field_names[DEV_FIELD_MAX_WORK_ITEM_SIZES], arr);
 
+                arr = mxCreateDoubleScalar(d.m_properties.preferred_vector_width_char);
+                    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_PREFERRED_VECTOR_WIDTH_CHAR], arr);
+
+                arr = mxCreateDoubleScalar(d.m_properties.preferred_vector_width_short);
+                    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_PREFERRED_VECTOR_WIDTH_SHORT], arr);
+
+                arr = mxCreateDoubleScalar(d.m_properties.preferred_vector_width_int);
+                    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_PREFERRED_VECTOR_WIDTH_INT], arr);
+
+                arr = mxCreateDoubleScalar(d.m_properties.preferred_vector_width_long);
+                    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_PREFERRED_VECTOR_WIDTH_LONG], arr);
+
+                arr = mxCreateDoubleScalar(d.m_properties.preferred_vector_width_float);
+                    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_PREFERRED_VECTOR_WIDTH_FLOAT], arr);
+
+                arr = mxCreateDoubleScalar(d.m_properties.preferred_vector_width_double);
+                    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_PREFERRED_VECTOR_WIDTH_DOUBLE], arr);
+    
                 arr = mxCreateDoubleScalar(d.m_properties.max_clock_frequency);
                     mxSetField(dev_arr, j, device_field_names[DEV_FIELD_MAX_CLOCK_FREQUENCY], arr);
 
-                arr = mxCreateDoubleScalar(d.m_properties.global_mem_size);
-                    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_GLOBAL_MEM_SIZE], arr);
+                arr = mxCreateDoubleScalar(d.m_properties.address_bits);
+                    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_ADDRESS_BITS], arr);
+
+                arr = mxCreateDoubleScalar(d.m_properties.max_read_image_args);
+                    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_MAX_READ_IMAGE_ARGS], arr);
+
+                arr = mxCreateDoubleScalar(d.m_properties.max_write_image_args);
+                    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_MAX_WRITE_IMAGE_ARGS], arr);
+
+                arr = mxCreateDoubleScalar(d.m_properties.max_mem_alloc_size);
+                    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_MAX_MEM_ALLOC_SIZE], arr);
+
+                arr = mxCreateDoubleScalar(d.m_properties.image2d_max_width);
+                    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_IMAGE2D_MAX_WIDTH], arr);
+
+                arr = mxCreateDoubleScalar(d.m_properties.image2d_max_height);
+                    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_IMAGE2D_MAX_HEIGHT], arr);
+
+                arr = mxCreateDoubleScalar(d.m_properties.image3d_max_width);
+                    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_IMAGE3D_MAX_WIDTH], arr);
+
+                arr = mxCreateDoubleScalar(d.m_properties.image3d_max_height);
+                    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_IMAGE3D_MAX_HEIGHT], arr);
+
+                arr = mxCreateDoubleScalar(d.m_properties.image3d_max_depth);
+                    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_IMAGE3D_MAX_DEPTH], arr);
+
+                arr = mxCreateDoubleScalar(d.m_properties.image_support);
+                    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_IMAGE_SUPPORT], arr);
+
+                arr = mxCreateDoubleScalar(d.m_properties.max_parameter_size);
+                    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_MAX_PARAMETER_SIZE], arr);
+
+                arr = mxCreateDoubleScalar(d.m_properties.max_samplers);
+                    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_MAX_SAMPLERS], arr);
+
+                arr = mxCreateDoubleScalar(d.m_properties.mem_base_addr_align);
+                    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_MEM_BASE_ADDR_ALIGN], arr);
+
+                arr = mxCreateDoubleScalar(d.m_properties.min_data_type_align_size);
+                    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_MIN_DATA_TYPE_ALIGN_SIZE], arr);
+
+                //arr = mxCreateDoubleScalar(d.m_properties.single_fp_config);
+                //    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_SINGLE_FP_CONFIG], arr);
+
+                //arr = mxCreateDoubleScalar(d.m_properties.global_mem_cache_type);
+                //    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_GLOBAL_MEM_CACHE_TYPE], arr);
+
+                arr = mxCreateDoubleScalar(d.m_properties.global_mem_cacheline_size);
+                    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_GLOBAL_MEM_CACHELINE_SIZE], arr);
 
                 arr = mxCreateDoubleScalar(d.m_properties.global_mem_cache_size);
                     mxSetField(dev_arr, j, device_field_names[DEV_FIELD_GLOBAL_MEM_CACHE_SIZE], arr);
+   
+                arr = mxCreateDoubleScalar(d.m_properties.global_mem_size);
+                    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_GLOBAL_MEM_SIZE], arr);
 
                 arr = mxCreateDoubleScalar(d.m_properties.max_constant_buffer_size);
                     mxSetField(dev_arr, j, device_field_names[DEV_FIELD_MAX_CONSTANT_BUFFER_SIZE], arr);
@@ -452,9 +576,27 @@ void fetch_opencl_devices(int nlhs, mxArray *plhs[], int nrhs, const mxArray *pr
                 arr = mxCreateDoubleScalar(d.m_properties.max_constant_args);
                     mxSetField(dev_arr, j, device_field_names[DEV_FIELD_MAX_CONSTANT_ARGS], arr);
 
+                //arr = mxCreateDoubleScalar(d.m_properties.local_mem_type);
+                //    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_LOCAL_MEM_TYPE], arr);
+
                 arr = mxCreateDoubleScalar(d.m_properties.local_mem_size);
                     mxSetField(dev_arr, j, device_field_names[DEV_FIELD_LOCAL_MEM_SIZE], arr);
 
+                arr = mxCreateDoubleScalar(d.m_properties.error_correction_support);
+                    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_ERROR_CORRECTION_SUPPORT], arr);
+
+                arr = mxCreateDoubleScalar(d.m_properties.profiling_timer_resolution);
+                    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_PROFILING_TIMER_RESOLUTION], arr);
+
+                arr = mxCreateDoubleScalar(d.m_properties.endian_little);
+                    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_ENDIAN_LITTLE], arr);
+
+                arr = mxCreateDoubleScalar(d.m_properties.available);
+                    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_AVAILABLE], arr);
+
+                arr = mxCreateDoubleScalar(d.m_properties.compiler_available);
+                    mxSetField(dev_arr, j, device_field_names[DEV_FIELD_COMPILER_AVAILABLE], arr);
+    
 			}
             mxSetField(plhs[0], i, platform_field_names[PLAT_FIELD_DEVICES],  dev_arr);                                  
 		}
