@@ -15,7 +15,7 @@ inline int get_index(int nelems, int index ) {
   return index;
 }
 
-__kernel void add(__global float *out, __global const float *x, __global const float *y, int N) {
+__kernel void single_add(__global float *out, __global const float *x, __global const float *y, int N) {
   int id = get_index(N, -1);
   while(id >= 0) {
     out[id] = x[id] + y[id];
@@ -23,7 +23,7 @@ __kernel void add(__global float *out, __global const float *x, __global const f
   }
 }
 
-__kernel void minus(__global float *out, __global const float *x, __global const float *y, int N) {
+__kernel void single_minus(__global float *out, __global const float *x, __global const float *y, int N) {
   int id = get_index(N, -1);
   while(id >= 0) {
     out[id] = x[id] - y[id];
@@ -31,7 +31,7 @@ __kernel void minus(__global float *out, __global const float *x, __global const
   }
 }
 
-__kernel void divide(__global float *out, __global const float *x, __global const float *y, int N) {
+__kernel void single_divide(__global float *out, __global const float *x, __global const float *y, int N) {
   int id = get_index(N, -1);
   while(id >= 0) {
     out[id] = x[id] /  y[id];
@@ -39,7 +39,7 @@ __kernel void divide(__global float *out, __global const float *x, __global cons
   }
 }
 
-__kernel void times(__global float *out, __global const float *x, __global const float *y, int N) {
+__kernel void single_times(__global float *out, __global const float *x, __global const float *y, int N) {
   int id = get_index(N, -1);
   while(id >= 0) {
     out[id] = x[id] *  y[id];
@@ -47,7 +47,7 @@ __kernel void times(__global float *out, __global const float *x, __global const
   }
 }
 
-__kernel void scalar_times(__global float *out, float w, global const float *x, int N) {
+__kernel void single_scalar_times(__global float *out, float w, global const float *x, int N) {
   int id = get_index(N, -1);
   while(id >= 0) {
     out[id] = w * x[id]; 
@@ -55,7 +55,15 @@ __kernel void scalar_times(__global float *out, float w, global const float *x, 
   }
 }
 
-__kernel void scalar_add(__global float *out, float w, global const float *x, int N) {
+__kernel void single_times_scalar(__global float *out, global const float *x, float w, int N) {
+  int id = get_index(N, -1);
+  while(id >= 0) {
+    out[id] = w * x[id]; 
+    id = get_index(N, id);
+  }
+}
+
+__kernel void single_add_scalar(__global float *out, global const float *x, float w, int N) {
   int id = get_index(N, -1);
   while(id >= 0) {
     out[id] = w + x[id]; 
@@ -63,7 +71,15 @@ __kernel void scalar_add(__global float *out, float w, global const float *x, in
   }
 }
 
-__kernel void scalar_minus(__global float *out, float w, global const float *x, int N) {
+__kernel void single_scalar_add(__global float *out, float w, global const float *x, int N) {
+  int id = get_index(N, -1);
+  while(id >= 0) {
+    out[id] = w + x[id]; 
+    id = get_index(N, id);
+  }
+}
+
+__kernel void single_scalar_minus(__global float *out, float w, global const float *x, int N) {
   int id = get_index(N, -1);
   while(id >= 0) {
     out[id] = w - x[id]; 
@@ -71,7 +87,7 @@ __kernel void scalar_minus(__global float *out, float w, global const float *x, 
   }
 }
 
-__kernel void minus_scalar(__global float *out, global const float *x, float w, int N) {
+__kernel void single_minus_scalar(__global float *out, global const float *x, float w, int N) {
   int id = get_index(N, -1);
   while(id >= 0) {
     out[id] = x[id] - w; 
@@ -79,7 +95,7 @@ __kernel void minus_scalar(__global float *out, global const float *x, float w, 
   }
 }
 
-__kernel void scalar_divide(__global float *out, float w, global const float *x, int N) {
+__kernel void single_scalar_divide(__global float *out, float w, global const float *x, int N) {
   int id = get_index(N, -1);
   while(id >= 0) {
     out[id] = w / x[id]; 
@@ -87,7 +103,7 @@ __kernel void scalar_divide(__global float *out, float w, global const float *x,
   }
 }
 
-__kernel void divide_scalar(__global float *out, global const float *x, float w, int N) {
+__kernel void single_divide_scalar(__global float *out, global const float *x, float w, int N) {
   int id = get_index(N, -1);
   while(id >= 0) {
     out[id] = x[id] / w; 
@@ -95,7 +111,7 @@ __kernel void divide_scalar(__global float *out, global const float *x, float w,
   }
 }
 
-__kernel void exponential(__global float *out, __global const float *x, int N) {
+__kernel void single_exponential(__global float *out, __global const float *x, int N) {
   int id = get_index(N, -1);
   while(id >= 0) {
     out[id] = exp(x[id]);

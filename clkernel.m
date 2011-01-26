@@ -225,7 +225,7 @@ classdef clkernel < handle
                 data = [];
                 nbytes = 0;
                 
-                if strcmp(S.class, 'clbuffer'),
+                if isa(argval, 'clbuffer'),
                     % It can be a buffer with actual data or buffer that is
                     % empty.
                     %                    
@@ -234,7 +234,7 @@ classdef clkernel < handle
                         %Local variable type:                        
                         nbytes = argval.num_bytes;
                     end
-                elseif strcmp(S.class, 'clobject')
+                elseif isa(argval, 'clobject'),
                     bufferid = argval.buffer.id;
                     if bufferid < 0,
                         %Local variable type:                        

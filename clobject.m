@@ -115,6 +115,139 @@ classdef clobject < handle
         %
             delete(this.buffer);
         end
+        
+        function obj = allocate_samesize(this)
+            obj = clobject(zeros(this.dims, this.datatype), this.device_id);
+        end
 
+        function result = plus(obj1, obj2)            
+            kernelname = 'add';            
+            if isobject(obj1),
+                N = uint32(prod(obj1.dims));
+                prefix = '_';
+                deviceid = obj1.device_id;
+                datatype = obj1.datatype;
+                result = obj1.allocate_samesize();
+            else
+                obj1 = single(obj1);
+                N = uint32(prod(obj2.dims));
+                prefix = '_scalar_';
+                deviceid = obj2.device_id;
+                datatype = obj2.datatype;
+                result = obj2.allocate_samesize();
+            end
+
+            if isobject(obj2),                
+                suffix = '';
+            else
+                obj2 = single(obj2);
+                suffix = '_scalar';
+            end
+            
+            kernelname = [datatype, prefix, kernelname, suffix];            
+            kernel = clkernel(kernelname, [], [], deviceid);         
+            kernel(result, obj1, obj2, N);
+        end
+
+        function result = minus(obj1, obj2)            
+            kernelname = 'minus';            
+            if isobject(obj1),
+                N = uint32(prod(obj1.dims));
+                prefix = '_';
+                deviceid = obj1.device_id;
+                datatype = obj1.datatype;
+                result = obj1.allocate_samesize();
+            else
+                obj1 = single(obj1);
+                N = uint32(prod(obj2.dims));
+                prefix = '_scalar_';
+                deviceid = obj2.device_id;
+                datatype = obj2.datatype;
+                result = obj2.allocate_samesize();
+            end
+
+            if isobject(obj2),                
+                suffix = '';
+            else
+                obj2 = single(obj2);
+                suffix = '_scalar';
+            end
+            
+            kernelname = [datatype, prefix, kernelname, suffix];            
+            kernel = clkernel(kernelname, [], [], deviceid);         
+            kernel(result, obj1, obj2, N);
+        end
+
+        function result = times(obj1, obj2)            
+            kernelname = 'times';            
+            if isobject(obj1),
+                N = uint32(prod(obj1.dims));
+                prefix = '_';
+                deviceid = obj1.device_id;
+                datatype = obj1.datatype;
+                result = obj1.allocate_samesize();
+            else
+                obj1 = single(obj1);
+                N = uint32(prod(obj2.dims));
+                prefix = '_scalar_';
+                deviceid = obj2.device_id;
+                datatype = obj2.datatype;
+                result = obj2.allocate_samesize();
+            end
+
+            if isobject(obj2),                
+                suffix = '';
+            else
+                obj2 = single(obj2);
+                suffix = '_scalar';
+            end
+            
+            kernelname = [datatype, prefix, kernelname, suffix];            
+            kernel = clkernel(kernelname, [], [], deviceid);         
+            kernel(result, obj1, obj2, N);
+        end
+        
+        function result = rdivide(obj1, obj2)
+            kernelname = 'divide';            
+            if isobject(obj1),
+                N = uint32(prod(obj1.dims));
+                prefix = '_';
+                deviceid = obj1.device_id;
+                datatype = obj1.datatype;
+                result = obj1.allocate_samesize();
+            else
+                obj1 = single(obj1);
+                N = uint32(prod(obj2.dims));
+                prefix = '_scalar_';
+                deviceid = obj2.device_id;
+                datatype = obj2.datatype;
+                result = obj2.allocate_samesize();
+            end
+
+            if isobject(obj2),                
+                suffix = '';
+            else
+                obj2 = single(obj2);
+                suffix = '_scalar';
+            end
+            
+            kernelname = [datatype, prefix, kernelname, suffix];            
+            kernel = clkernel(kernelname, [], [], deviceid);         
+            kernel(result, obj1, obj2, N);
+        end
+        
+        function result = exp(obj1)
+            kernelname = 'exponential';            
+
+            N = uint32(prod(obj1.dims));
+            prefix = '_';
+            deviceid = obj1.device_id;
+            datatype = obj1.datatype;
+            result = obj1.allocate_samesize();    
+ 
+            kernelname = [datatype, prefix, kernelname];
+            kernel = clkernel(kernelname, [], [], deviceid);
+            kernel(result, obj1, N);
+        end
     end
 end
