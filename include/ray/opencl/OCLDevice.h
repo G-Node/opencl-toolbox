@@ -10,11 +10,8 @@
  * Email: rayver /_at_/ hkn (dot) berkeley (dot) edu
  */
 
-#include <CL/cl.h>
 
-#include <ray/opencl/ocl_device_properties.h>
-#include <ray/opencl/OCLError.h>
-#include <ray/opencl/OCLUtils.h>
+#include <ray/opencl/opencl.h>
 
 namespace ray { namespace opencl {
 

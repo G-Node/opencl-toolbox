@@ -12,8 +12,7 @@
 #include <string>
 #include <exception>
 
-#include <ray/opencl/OCLConstants.h>
-#include <CL/cl.h>
+#include <ray/opencl/opencl.h>
 
 #define ocl_check(code, msg)			{ int _errcode = code; if (_errcode != CL_SUCCESS) { throw OCLError(_errcode, msg); } }
 

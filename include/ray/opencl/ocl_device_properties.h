@@ -9,8 +9,10 @@
  */
 
 // Device information available:
-#include <CL/cl.h>
+#include <ray/opencl/opencl.h>
+
 #include <string>
+#include <vector>
 
 namespace ray { namespace opencl {
 
