@@ -16,11 +16,7 @@
 
 #include <vector>
 
-#include <ray/opencl/OCLDevice.h>
-#include <ray/opencl/OCLUtils.h>
-#include <ray/opencl/OCLConstants.h>
-#include <ray/opencl/OCLError.h>
-#include <ray/opencl/OCLPlatform.h>
+#include <ray/opencl/opencl.h>
 
 
 namespace ray { namespace opencl {
