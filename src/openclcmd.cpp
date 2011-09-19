@@ -33,6 +33,7 @@
 #include <string.h>
 
 #include "mex.h"
+#include "matrix.h"
 
 using namespace ray::opencl;
 
@@ -93,20 +94,20 @@ static void cleanup(void) {
 /********************************
  * FUNCTION PROTOTYPES          *
  ********************************/
-void fetch_opencl_devices(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
-void initialize(mxArray *plhs[], const mxArray *platform, const mxArray *devices);
-void add_file(mxArray *plhs[], const mxArray *filename);
-void build(mxArray *plhs[]);
+static void fetch_opencl_devices(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
+static void initialize(mxArray *plhs[], const mxArray *platform, const mxArray *devices);
+static void add_file(mxArray *plhs[], const mxArray *filename);
+static void build(mxArray *plhs[]);
 
-void create_buffer(mxArray *plhs[], const mxArray *mode, const mxArray *sz);
-void set_buffer(mxArray *plhs[], const mxArray *deviceNumber, const mxArray *bufferNumber, const mxArray *data);
-void get_buffer(mxArray *plhs[], const mxArray *deviceNumber, const mxArray *bufferNumber, 
+static void create_buffer(mxArray *plhs[], const mxArray *mode, const mxArray *sz);
+static void set_buffer(mxArray *plhs[], const mxArray *deviceNumber, const mxArray *bufferNumber, const mxArray *data);
+static void get_buffer(mxArray *plhs[], const mxArray *deviceNumber, const mxArray *bufferNumber, 
     const mxArray *num_elements, const mxArray *type);
-void wait_queue(mxArray *plhs[], const mxArray *deviceNumber);
-void create_kernels(mxArray *plhs[], const mxArray *local, const mxArray *global, const mxArray *name);
-void execute_kernel(mxArray *plhs[], const mxArray *device_id, const mxArray *kernel_id);
+static void wait_queue(mxArray *plhs[], const mxArray *deviceNumber);
+static void create_kernels(mxArray *plhs[], const mxArray *local, const mxArray *global, const mxArray *name);
+static void execute_kernel(mxArray *plhs[], const mxArray *device_id, const mxArray *kernel_id);
 
-void set_kernel_args(mxArray *plhs[], const mxArray *kernel_id, 
+static void set_kernel_args(mxArray *plhs[], const mxArray *kernel_id, 
     const mxArray *arg_num, const mxArray *buffer_id, const mxArray *data, const mxArray *size);
 
 void destroy_buffer(mxArray *plhs[], const mxArray *bufferId);
@@ -296,7 +297,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 /********************************
  * HELPER SUBROUTINES           *
  ********************************/
-void fetch_opencl_devices(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+static void fetch_opencl_devices(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {    
     
     mwSize dims[2] = {1, 1};
@@ -610,7 +611,7 @@ void fetch_opencl_devices(int nlhs, mxArray *plhs[], int nrhs, const mxArray *pr
 	}        
 }
 
-void initialize(mxArray *plhs[], const mxArray *platform, const mxArray *devices) {
+static void initialize(mxArray *plhs[], const mxArray *platform, const mxArray *devices) {
     int platform_idx = static_cast<int>(mxGetScalar(platform) );
     int len = 0;
     unsigned int *p_data_uint32 = 0;
@@ -731,7 +732,7 @@ void build(mxArray *plhs[]) {
     plhs[0] = mxCreateLogicalScalar(return_value);
 }
 
-void create_buffer(mxArray *plhs[], const mxArray *mode, const mxArray *sz) {
+static void create_buffer(mxArray *plhs[], const mxArray *mode, const mxArray *sz) {
     int len;
 
     len = mxGetNumberOfElements(mode);
@@ -819,7 +820,7 @@ void destroy_buffer(mxArray *plhs[], const mxArray *buffer_id) {
     plhs[0] = mxCreateLogicalScalar(returnval);
 }
 
-void set_buffer(mxArray *plhs[], const mxArray *deviceNumber, const mxArray *bufferNumber, const mxArray *data) {
+static void set_buffer(mxArray *plhs[], const mxArray *deviceNumber, const mxArray *bufferNumber, const mxArray *data) {
     int sz = mxGetNumberOfElements(data);
     if (mxIsDouble(data)) {
         sz *= 8;
@@ -855,7 +856,7 @@ void set_buffer(mxArray *plhs[], const mxArray *deviceNumber, const mxArray *buf
     plhs[0] = mxCreateLogicalScalar(return_val);
 }
 
-void wait_queue(mxArray *plhs[], const mxArray *deviceNumber) {
+static void wait_queue(mxArray *plhs[], const mxArray *deviceNumber) {
     size_t dev_idx = (size_t) mxGetScalar(deviceNumber);
     int return_val = 0;
 
@@ -875,7 +876,7 @@ void wait_queue(mxArray *plhs[], const mxArray *deviceNumber) {
     plhs[0] = mxCreateLogicalScalar(return_val);
 }
 
-void get_buffer(mxArray *plhs[], const mxArray *deviceNumber, const mxArray *bufferNumber, 
+static void get_buffer(mxArray *plhs[], const mxArray *deviceNumber, const mxArray *bufferNumber, 
     const mxArray *num_elements, const mxArray *type) {
     size_t dev_idx = (size_t) mxGetScalar(deviceNumber);
     size_t buf_idx = (size_t) mxGetScalar(bufferNumber);
@@ -953,7 +954,7 @@ void get_buffer(mxArray *plhs[], const mxArray *deviceNumber, const mxArray *buf
     }
 }
 
-void create_kernels(mxArray *plhs[], const mxArray *local, const mxArray *global, const mxArray *name) {
+static void create_kernels(mxArray *plhs[], const mxArray *local, const mxArray *global, const mxArray *name) {
     //Require local and global to be cast to uint32!
 
     unsigned int global_size[3] = {0,0,0};
@@ -1028,7 +1029,7 @@ void execute_kernel(mxArray *plhs[], const mxArray *device_id, const mxArray *ke
 //set_kernel_args( kernel_id, arg_num, -1, data, 0 )         arg: constant data
 //set_kernel_args( kernel_id, arg_num, -1, [], nBytes )      arg: local variable
 //
-void set_kernel_args(mxArray *plhs[], const mxArray *kernel_id, 
+static void set_kernel_args(mxArray *plhs[], const mxArray *kernel_id, 
     const mxArray *arg_num, const mxArray *buffer_id, const mxArray *data, const mxArray *size) {
 
     size_t kernel_idx = (size_t) mxGetScalar(kernel_id);
