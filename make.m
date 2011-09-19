@@ -29,6 +29,9 @@ switch arch
     libs = '-lOpenCL';
     cxxflags = '-m32';
 
+  case{'glnxa64'}
+    libs = '-lOpenCL';
+    
 end
 
 ldflags = ['LDFLAGS=\$LDFLAGS ' ldflags];
