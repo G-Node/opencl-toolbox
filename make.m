@@ -7,7 +7,7 @@
 arch = computer('arch');
 
 opencl_include_dir = '/usr/include';
-cflags = '';
+cxxflags = '';
 ldflags = '';
 libs = ' ';
 
@@ -25,11 +25,15 @@ switch arch
     cflags = '-framework OpenCL';
     ldflags = '-framework OpenCL';
     
+  case {'glnx86'}
+    libs = '-lOpenCL';
+    cxxflags = '-m32';
+
 end
 
-cflags = ['CFLAGS=\$CFLAGS ' cflags ];
 ldflags = ['LDFLAGS=\$LDFLAGS ' ldflags];
+cxxflags = ['CXXFLAGS=\$CXXFLAGS ' cxxflags ];
 
 mex('-v', 'src/openclcmd.cpp', '-Iinclude', ['-I' opencl_include_dir], ...
-    libs, cflags, ldflags);
-  
+    libs, cxxflags, ldflags);
+
