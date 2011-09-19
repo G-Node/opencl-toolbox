@@ -22,7 +22,7 @@ switch arch
     
   case {'maci64','maci32'}
     opencl_include_dir = '/System/Library/Frameworks/OpenCL.framework/Headers';
-    cflags = '-framework OpenCL';
+    cxxflags = '-framework OpenCL';
     ldflags = '-framework OpenCL';
     
   case {'glnx86'}
